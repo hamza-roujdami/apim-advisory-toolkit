@@ -1,0 +1,12 @@
+// Gateway calls from client IPs never seen before the advisory fix date.
+// Table: ApiManagementGatewayLogs (resource-specific) - enable APIM diagnostic settings.
+let fix = datetime({fix_date});
+let known = ApiManagementGatewayLogs
+    | where TimeGenerated between (fix - 60d .. fix - 14d)
+    | distinct CallerIpAddress;
+ApiManagementGatewayLogs
+| where TimeGenerated > fix - 14d
+| where CallerIpAddress !in (known)
+| summarize Calls = count(), Apis = make_set(ApiId, 10), Subs = make_set(ApimSubscriptionId, 10),
+            First = min(TimeGenerated), Last = max(TimeGenerated) by CallerIpAddress
+| order by Calls desc

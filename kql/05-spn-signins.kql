@@ -1,0 +1,8 @@
+// Service principal sign-ins for app registrations whose secrets were stored in APIM.
+// Fill {app_ids} with a comma-separated quoted list, e.g. "<app-id-1>", "<app-id-2>".
+AADServicePrincipalSignInLogs
+| where TimeGenerated > ago({lookback})
+| where AppId in ({app_ids})
+| summarize SignIns = count(), IPs = make_set(IPAddress, 20), Locations = make_set(Location, 10),
+            First = min(TimeGenerated), Last = max(TimeGenerated) by AppId, ServicePrincipalName, ResultType
+| order by SignIns desc

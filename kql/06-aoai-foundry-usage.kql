@@ -1,0 +1,7 @@
+// Foundry / Azure OpenAI key-based usage spikes and new source IPs.
+// Table: AzureDiagnostics (Cognitive Services RequestResponse) - enable diagnostic settings on the account.
+AzureDiagnostics
+| where TimeGenerated > ago({lookback})
+| where ResourceProvider == "MICROSOFT.COGNITIVESERVICES" and Category == "RequestResponse"
+| summarize Calls = count(), IPs = dcount(CallerIPAddress) by Resource, bin(TimeGenerated, 1d)
+| order by TimeGenerated asc

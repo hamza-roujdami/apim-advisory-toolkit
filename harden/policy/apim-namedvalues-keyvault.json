@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "displayName": "APIM secret named values must reference Azure Key Vault",
+    "description": "Audits/denies API Management named values marked secret that are stored inside APIM instead of referencing a Key Vault secret. Validate aliases in your tenant first: az provider show -n Microsoft.ApiManagement --expand resourceTypes/aliases",
+    "mode": "All",
+    "parameters": {
+      "effect": { "type": "String", "allowedValues": ["Audit", "Deny", "Disabled"], "defaultValue": "Audit" }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          { "field": "type", "equals": "Microsoft.ApiManagement/service/namedValues" },
+          { "field": "Microsoft.ApiManagement/service/namedValues/secret", "equals": true },
+          { "field": "Microsoft.ApiManagement/service/namedValues/keyVault.secretIdentifier", "exists": false }
+        ]
+      },
+      "then": { "effect": "[parameters('effect')]" }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+// Callers touching APIM that were not seen in the 30 days before the lookback window.
+let window = {lookback};
+let baseline = AzureActivity
+    | where TimeGenerated between (ago(window + 30d) .. ago(window))
+    | where ResourceProviderValue =~ "MICROSOFT.APIMANAGEMENT"
+    | distinct Caller;
+AzureActivity
+| where TimeGenerated > ago(window)
+| where ResourceProviderValue =~ "MICROSOFT.APIMANAGEMENT"
+| where Caller !in (baseline)
+| summarize Ops = make_set(OperationNameValue, 20), Count = count(), Last = max(TimeGenerated)
+    by Caller, CallerIpAddress
+| order by Count desc

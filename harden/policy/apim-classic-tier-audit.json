@@ -1,0 +1,19 @@
+{
+  "properties": {
+    "displayName": "Audit API Management instances on Classic tiers",
+    "description": "Flags APIM instances on Developer/Basic/Standard/Premium (Classic) so they can be prioritised for advisory remediation and v2 migration planning.",
+    "mode": "Indexed",
+    "parameters": {
+      "effect": { "type": "String", "allowedValues": ["Audit", "Disabled"], "defaultValue": "Audit" }
+    },
+    "policyRule": {
+      "if": {
+        "allOf": [
+          { "field": "type", "equals": "Microsoft.ApiManagement/service" },
+          { "field": "Microsoft.ApiManagement/service/sku.name", "in": ["Developer", "Basic", "Standard", "Premium"] }
+        ]
+      },
+      "then": { "effect": "[parameters('effect')]" }
+    }
+  }
+}

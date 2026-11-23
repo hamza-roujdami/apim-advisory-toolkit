@@ -1,0 +1,57 @@
+<!--
+  Reference API-level policy for an AI gateway API.
+  Client  -> APIM : subscription key + Entra ID token (validated here)
+  APIM    -> Foundry: managed identity token (no API key)
+  APIM    -> third-party LLM API: API key from a Key Vault-referenced named value {{llm-api-key}}
+  Replace {{...}} placeholders with your named values.
+-->
+<policies>
+  <inbound>
+    <base />
+    <!-- 1. Caller identity: Entra ID token issued for this API's app registration -->
+    <validate-azure-ad-token tenant-id="{{tenant-id}}" header-name="Authorization"
+                             failed-validation-httpcode="401" failed-validation-error-message="Unauthorized">
+      <audiences>
+        <audience>{{api-audience}}</audience>
+      </audiences>
+    </validate-azure-ad-token>
+
+    <!-- 2. Per-subscription token budget (subscription key identifies the app) -->
+    <azure-openai-token-limit counter-key="@(context.Subscription.Id)"
+                              tokens-per-minute="20000" estimate-prompt-tokens="true"
+                              remaining-tokens-header-name="x-remaining-tokens" />
+
+    <!-- 3. Never forward the client's subscription key or token to the backend -->
+    <set-header name="Ocp-Apim-Subscription-Key" exists-action="delete" />
+    <set-header name="api-key" exists-action="delete" />
+
+    <choose>
+      <!-- 4a. Foundry / Azure OpenAI: managed identity, no key -->
+      <when condition="@(context.Request.Url.Path.Contains(&quot;/openai/&quot;))">
+        <set-backend-service backend-id="foundry" />
+        <authentication-managed-identity resource="https://cognitiveservices.azure.com"
+                                         output-token-variable-name="msi-token" ignore-error="false" />
+        <set-header name="Authorization" exists-action="override">
+          <value>@("Bearer " + (string)context.Variables["msi-token"])</value>
+        </set-header>
+      </when>
+      <!-- 4b. Third-party LLM API: key from Key Vault named value (adjust header name/scheme to what the provider expects) -->
+      <otherwise>
+        <set-backend-service backend-id="llm-provider" />
+        <set-header name="Authorization" exists-action="override">
+          <value>Bearer {{llm-api-key}}</value>
+        </set-header>
+      </otherwise>
+    </choose>
+  </inbound>
+  <backend>
+    <base />
+  </backend>
+  <outbound>
+    <base />
+    <set-header name="x-ms-region" exists-action="delete" />
+  </outbound>
+  <on-error>
+    <base />
+  </on-error>
+</policies>

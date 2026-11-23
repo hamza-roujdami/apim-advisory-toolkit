@@ -1,0 +1,50 @@
+[
+  {
+    "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-gw/providers/Microsoft.ApiManagement/service/apim-contoso-prod-001",
+    "name": "apim-contoso-prod-001",
+    "resourceGroup": "rg-ai-gw",
+    "subscriptionId": "11111111-1111-1111-1111-111111111111",
+    "subscriptionName": "Sub-Prod",
+    "location": "uaenorth",
+    "sku": "Premium",
+    "capacity": 1,
+    "vnetType": "Internal",
+    "identityType": "SystemAssigned",
+    "classic": true,
+    "inAdvisory": "Yes",
+    "advisoryNote": "",
+    "priority": "P1"
+  },
+  {
+    "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-dev/providers/Microsoft.ApiManagement/service/apim-contoso-dev-001",
+    "name": "apim-contoso-dev-001",
+    "resourceGroup": "rg-dev",
+    "subscriptionId": "22222222-2222-2222-2222-222222222222",
+    "subscriptionName": "Sub-Dev",
+    "location": "uaenorth",
+    "sku": "Developer",
+    "capacity": 1,
+    "vnetType": "None",
+    "identityType": "",
+    "classic": true,
+    "inAdvisory": "Yes",
+    "advisoryNote": "impacted resources not readable (403); subscription is listed on the event",
+    "priority": "P1"
+  },
+  {
+    "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-gw/providers/Microsoft.ApiManagement/service/apim-contoso-v2-001",
+    "name": "apim-contoso-v2-001",
+    "resourceGroup": "rg-ai-gw",
+    "subscriptionId": "11111111-1111-1111-1111-111111111111",
+    "subscriptionName": "Sub-Prod",
+    "location": "uaenorth",
+    "sku": "StandardV2",
+    "capacity": 1,
+    "vnetType": "None",
+    "identityType": "SystemAssigned",
+    "classic": false,
+    "inAdvisory": "No",
+    "advisoryNote": "",
+    "priority": "P4"
+  }
+]

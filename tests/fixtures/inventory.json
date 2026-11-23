@@ -1,0 +1,374 @@
+[
+  {
+    "instance": {
+      "id": "/subscriptions/11111111-1111-1111-1111-111111111111/resourceGroups/rg-ai-gw/providers/Microsoft.ApiManagement/service/apim-contoso-prod-001",
+      "name": "apim-contoso-prod-001",
+      "resourceGroup": "rg-ai-gw",
+      "subscriptionId": "11111111-1111-1111-1111-111111111111",
+      "subscriptionName": "Sub-Prod",
+      "location": "uaenorth",
+      "sku": "Premium",
+      "capacity": 1,
+      "vnetType": "Internal",
+      "identityType": "SystemAssigned",
+      "classic": true,
+      "inAdvisory": "Yes",
+      "advisoryNote": "",
+      "priority": "P1"
+    },
+    "errors": {},
+    "findings": [
+      {
+        "severity": "Critical",
+        "area": "Named value",
+        "item": "embedding-api-key",
+        "detail": "Key-like value stored in clear text",
+        "action": "Rotate at source now; store in Key Vault; recreate as Key Vault named value"
+      },
+      {
+        "severity": "High",
+        "area": "Named value",
+        "item": "gpt-api-key",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
+      },
+      {
+        "severity": "High",
+        "area": "Named value",
+        "item": "5f1c0e2a9b7d4e3f8a6b1c2d",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "2 active subscriptions",
+        "detail": "Keys may have been read before the fix",
+        "action": "Map client apps to subscriptions; regenerate secondary -> swap -> regenerate primary"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "Built-in all-access subscription",
+        "detail": "Key grants access to every API",
+        "action": "Regenerate both keys; never use in apps"
+      },
+      {
+        "severity": "Medium",
+        "area": "Developer portal",
+        "item": "Username/password sign-up",
+        "detail": "Self sign-up enabled (see CVE-2025-66390 behaviour)",
+        "action": "Disable sign-up; prefer Entra ID identity provider only"
+      },
+      {
+        "severity": "Low",
+        "area": "Products",
+        "item": "starter",
+        "detail": "Default sample product present",
+        "action": "Delete if unused (remediate: delete-default-products)"
+      },
+      {
+        "severity": "Info",
+        "area": "Management plane",
+        "item": "tenant/access",
+        "detail": "Disabled - still regenerate its keys after the advisory",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Info",
+        "area": "Management plane",
+        "item": "tenant/gitAccess",
+        "detail": "Disabled - still regenerate its keys after the advisory",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Info",
+        "area": "Tier",
+        "item": "Premium",
+        "detail": "Classic tier (advisory scope)",
+        "action": "Plan migration to v2 tier where available"
+      }
+    ],
+    "namedValues": [
+      {
+        "name": "embedding-api-key",
+        "displayName": "embedding-api-key",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 32,
+        "type": "Plain value (looks like a key)",
+        "risk": "Rotate NOW + move to Key Vault",
+        "usedBy": ""
+      },
+      {
+        "name": "tenant-id",
+        "displayName": "tenant-id",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 36,
+        "type": "Plain value",
+        "risk": "OK (config)",
+        "usedBy": ""
+      },
+      {
+        "name": "api-audience",
+        "displayName": "api-audience",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 36,
+        "type": "Plain value",
+        "risk": "OK (config)",
+        "usedBy": ""
+      },
+      {
+        "name": "orders-backend-url",
+        "displayName": "orders-backend-url",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 35,
+        "type": "Plain value",
+        "risk": "OK (config)",
+        "usedBy": ""
+      },
+      {
+        "name": "gpt-api-key",
+        "displayName": "gpt-api-key",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": ""
+      },
+      {
+        "name": "5f1c0e2a9b7d4e3f8a6b1c2d",
+        "displayName": "5f1c0e2a9b7d4e3f8a6b1c2d",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": "backend:aoai"
+      },
+      {
+        "name": "llm-api-key",
+        "displayName": "llm-api-key",
+        "secret": true,
+        "keyVaultSecretId": "https://kv-contoso.vault.azure.net/secrets/llm-api-key",
+        "length": null,
+        "type": "KeyVault",
+        "risk": "OK",
+        "usedBy": ""
+      }
+    ],
+    "backends": [
+      {
+        "name": "aoai",
+        "url": "https://aoai.contoso.example/openai",
+        "usesCredentials": true,
+        "authorization": false
+      }
+    ],
+    "subscriptions": [
+      {
+        "name": "master",
+        "displayName": "Built-in all-access subscription",
+        "scope": [
+          "apim-contoso-prod-001",
+          "apis"
+        ],
+        "state": "active",
+        "owner": ""
+      },
+      {
+        "name": "app-a",
+        "displayName": "App A",
+        "scope": [
+          "products",
+          "ai"
+        ],
+        "state": "active",
+        "owner": "1"
+      },
+      {
+        "name": "app-b",
+        "displayName": "App B",
+        "scope": [
+          "products",
+          "ai"
+        ],
+        "state": "suspended",
+        "owner": ""
+      }
+    ],
+    "subscriptionCount": 3,
+    "products": [
+      {
+        "name": "ai",
+        "subscriptionRequired": true,
+        "approvalRequired": true,
+        "state": "published"
+      },
+      {
+        "name": "starter",
+        "subscriptionRequired": true,
+        "approvalRequired": false,
+        "state": "published"
+      }
+    ],
+    "tenant_access_enabled": false,
+    "tenant_gitAccess_enabled": false,
+    "portalSignupEnabled": true,
+    "identityProviders": [
+      "aad"
+    ],
+    "credentialManager": [],
+    "summary": {
+      "Critical": 1,
+      "High": 4,
+      "Medium": 1,
+      "Low": 1,
+      "Info": 3
+    },
+    "secretsInApim": 3
+  },
+  {
+    "instance": {
+      "id": "/subscriptions/22222222-2222-2222-2222-222222222222/resourceGroups/rg-dev/providers/Microsoft.ApiManagement/service/apim-contoso-dev-001",
+      "name": "apim-contoso-dev-001",
+      "resourceGroup": "rg-dev",
+      "subscriptionId": "22222222-2222-2222-2222-222222222222",
+      "subscriptionName": "Sub-Dev",
+      "location": "uaenorth",
+      "sku": "Developer",
+      "capacity": 1,
+      "vnetType": "None",
+      "identityType": "",
+      "classic": true,
+      "inAdvisory": "Yes",
+      "advisoryNote": "impacted resources not readable (403); subscription is listed on the event",
+      "priority": "P1"
+    },
+    "errors": {},
+    "findings": [
+      {
+        "severity": "High",
+        "area": "Named value",
+        "item": "llm-api-key-dev",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
+      },
+      {
+        "severity": "High",
+        "area": "Named value",
+        "item": "gpt-4o-api-key-LLM",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "1 active subscriptions",
+        "detail": "Keys may have been read before the fix",
+        "action": "Map client apps to subscriptions; regenerate secondary -> swap -> regenerate primary"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "Built-in all-access subscription",
+        "detail": "Key grants access to every API",
+        "action": "Regenerate both keys; never use in apps"
+      },
+      {
+        "severity": "High",
+        "area": "Management plane",
+        "item": "tenant/access",
+        "detail": "Legacy direct management / Git access enabled",
+        "action": "Disable and regenerate keys (remediate: disable-tenant-access, regen-tenant-keys)"
+      },
+      {
+        "severity": "High",
+        "area": "Credential manager",
+        "item": "1 providers",
+        "detail": "OAuth client secrets stored in APIM",
+        "action": "Rotate client secrets in each identity provider"
+      },
+      {
+        "severity": "Medium",
+        "area": "Identity",
+        "item": "Managed identity",
+        "detail": "No managed identity on APIM",
+        "action": "Enable system-assigned identity (needed for Key Vault refs and MI auth to Foundry)"
+      },
+      {
+        "severity": "Info",
+        "area": "Management plane",
+        "item": "tenant/gitAccess",
+        "detail": "Could not read setting (404)",
+        "action": "Check manually in portal: Deployment + infrastructure > Management API"
+      },
+      {
+        "severity": "Info",
+        "area": "Tier",
+        "item": "Developer",
+        "detail": "Classic tier (advisory scope)",
+        "action": "Plan migration to v2 tier where available"
+      }
+    ],
+    "namedValues": [
+      {
+        "name": "llm-api-key-dev",
+        "displayName": "llm-api-key-dev",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": ""
+      },
+      {
+        "name": "gpt-4o-api-key-LLM",
+        "displayName": "gpt-4o-api-key-LLM",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": ""
+      }
+    ],
+    "backends": [],
+    "subscriptions": [
+      {
+        "name": "master",
+        "displayName": "Built-in all-access subscription",
+        "scope": [
+          "apim-contoso-dev-001",
+          "apis"
+        ],
+        "state": "active",
+        "owner": ""
+      }
+    ],
+    "subscriptionCount": 1,
+    "products": [],
+    "tenant_access_enabled": true,
+    "tenant_gitAccess_enabled": "unknown (404)",
+    "portalSignupEnabled": false,
+    "identityProviders": [],
+    "credentialManager": [
+      {
+        "name": "github",
+        "provider": "github"
+      }
+    ],
+    "summary": {
+      "Critical": 0,
+      "High": 6,
+      "Medium": 1,
+      "Low": 0,
+      "Info": 2
+    },
+    "secretsInApim": 2
+  }
+]

@@ -1,0 +1,9 @@
+// Key Vault reads of secrets APIM references - who read them and from where.
+// Table: AzureDiagnostics (Key Vault AuditEvent) or KeyVaultAuditLogs if resource-specific.
+AzureDiagnostics
+| where TimeGenerated > ago({lookback})
+| where ResourceProvider == "MICROSOFT.KEYVAULT" and Category == "AuditEvent"
+| where OperationName in ("SecretGet", "SecretList", "SecretSet", "SecretListVersions")
+| summarize Count = count(), Last = max(TimeGenerated)
+    by Resource, OperationName, identity_claim_appid_g, CallerIPAddress, ResultSignature
+| order by Last desc
