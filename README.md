@@ -7,6 +7,10 @@ misuse, rotate safely, and harden so it can't happen again.
 > Microsoft closed the access path on 19 Nov 2026. Secrets stored in APIM before then may have been read, and
 > the platform fix does **not** invalidate them. Treat everything stored in a Classic APIM instance as exposed.
 
+> **Disclaimer:** community tool, provided as-is under the MIT license. It is **not** an official Microsoft tool
+> and isn't supported by Microsoft. For official guidance, follow the Service Health advisory in your Azure portal
+> and open a support case. Run in dry-run mode first and test in a non-production subscription (see `lab/`).
+
 ![Target architecture](docs/target-architecture.png)
 
 ## What's in the box
