@@ -80,7 +80,7 @@ Every write is recorded in `out/remediation-log.json`.
 | Task | Minimum role |
 |---|---|
 | assess / inventory / report | Reader on the subscriptions + `API Management Service Reader` |
-| Advisory impacted resources | Owner/Contributor, or a role with `Microsoft.ResourceHealth/events/fetchEventDetails/action` |
+| Advisory impacted resources | **Service Health Security Reader**, Owner/Contributor, or a custom role with `Microsoft.ResourceHealth/events/fetchEventDetails/action` and `.../listSecurityAdvisoryImpactedResources/action` |
 | hunt | Log Analytics Reader on the workspace |
 | remediate | `API Management Service Contributor` on the instance |
 | harden (Bicep) | Contributor + `User Access Administrator` (for role assignments) |
@@ -103,7 +103,36 @@ tests/             offline tests against a fake tenant (pytest)
 ```
 
 ## Status / limitations
-- The REST calls use APIM API version `2022-08-01` and Resource Health `2022-10-01`.
+- The REST calls use APIM API version `2022-08-01`, Resource Health `2022-10-01`, and `2025-05-01` for security advisory impacted resources.
 - The Bicep and Policy files haven't been deployment-tested. Run `az bicep build` and `what-if` before using them, and check the Policy aliases in your tenant.
 - The advisory's access path was on Microsoft's platform, so the hunt queries can't prove whether a read happened. They look for **misuse** of the secrets afterwards.
 - The plain-value key detection is a heuristic. Review the Named values tab.
+
+## Official Microsoft references
+
+**The advisory and Service Health**
+- [Security advisories in Azure Service Health](https://learn.microsoft.com/azure/service-health/security-advisories-elevated-access): who can see which details
+- [Impacted resources from Azure security advisories](https://learn.microsoft.com/azure/service-health/impacted-resources-security): portal view and API
+- [Configure subscription or tenant access to security advisories](https://learn.microsoft.com/azure/service-health/security-advisories-add-subscription)
+- [Microsoft Security Response Center: Security Update Guide](https://msrc.microsoft.com/update-guide)
+
+**Securing API Management**
+- [Secure your Azure API Management deployment](https://learn.microsoft.com/azure/api-management/secure-api-management)
+- [Azure security baseline for API Management](https://learn.microsoft.com/security/benchmark/azure/baselines/api-management-security-baseline)
+- [Architecture best practices for API Management (Well-Architected)](https://learn.microsoft.com/azure/well-architected/service-guides/azure-api-management)
+- [Built-in Azure Policy definitions for API Management](https://learn.microsoft.com/azure/api-management/policy-reference)
+- [Direct management API retirement (March 2025)](https://learn.microsoft.com/azure/api-management/breaking-changes/direct-management-api-retirement-march-2025)
+- [Secure access to the developer portal](https://learn.microsoft.com/azure/api-management/secure-developer-portal-access)
+- [Monitor API Management](https://learn.microsoft.com/azure/api-management/monitor-api-management)
+
+**Secrets, keys and identity**
+- [Use named values in API Management policies (including Key Vault)](https://learn.microsoft.com/azure/api-management/api-management-howto-properties)
+- [Subscriptions in API Management (key management)](https://learn.microsoft.com/azure/api-management/api-management-subscriptions)
+- [Use managed identities in API Management](https://learn.microsoft.com/azure/api-management/api-management-howto-use-managed-service-identity)
+- [authentication-managed-identity policy](https://learn.microsoft.com/azure/api-management/authentication-managed-identity-policy)
+- [validate-azure-ad-token policy](https://learn.microsoft.com/azure/api-management/validate-azure-ad-token-policy)
+- [Rotate keys for Azure AI services](https://learn.microsoft.com/azure/ai-services/rotate-keys)
+
+**AI gateway**
+- [Authenticate and authorize access to LLM APIs with API Management](https://learn.microsoft.com/azure/api-management/api-management-authenticate-authorize-ai-apis)
+- [API Management v2 tiers overview](https://learn.microsoft.com/azure/api-management/v2-service-tiers-overview)

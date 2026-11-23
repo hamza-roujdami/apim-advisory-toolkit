@@ -28,7 +28,7 @@
     "identityType": "",
     "classic": true,
     "inAdvisory": "Yes",
-    "advisoryNote": "impacted resources not readable (403); subscription is listed on the event",
+    "advisoryNote": "impacted resources not readable (403/403); subscription is listed on the event - grant Service Health Security Reader to see resource-level detail",
     "priority": "P1"
   },
   {

@@ -37,9 +37,10 @@ def nv(name, secret=False, value=None, kv=None):
 RESP = {
     # advisory: prod sub listed with readable resources, dev sub listed but restricted
     f"/subscriptions/{SUB}/providers/Microsoft.ResourceHealth/events/MZK9-GH0": {"name": "MZK9-GH0"},
-    f"/subscriptions/{SUB}/providers/Microsoft.ResourceHealth/events/MZK9-GH0/impactedResources":
+    f"/subscriptions/{SUB}/providers/Microsoft.ResourceHealth/events/MZK9-GH0/listSecurityAdvisoryImpactedResources":
         {"value": [{"properties": {"targetResourceId": APIM1}}]},
     f"/subscriptions/{SUB2}/providers/Microsoft.ResourceHealth/events/MZK9-GH0": {"name": "MZK9-GH0"},
+    f"/subscriptions/{SUB2}/providers/Microsoft.ResourceHealth/events/MZK9-GH0/listSecurityAdvisoryImpactedResources": ArmError(403, "x", "forbidden"),
     f"/subscriptions/{SUB2}/providers/Microsoft.ResourceHealth/events/MZK9-GH0/impactedResources": ArmError(403, "x", "forbidden"),
 
     f"{APIM1}/namedValues": {"value": [

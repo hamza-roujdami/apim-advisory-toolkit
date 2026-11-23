@@ -1,7 +1,7 @@
 """01 - Assess: which APIM instances exist, which are Classic, which are named in the advisory."""
 from __future__ import annotations
 
-from .arm import HEALTH_API, Arm
+from .arm import HEALTH_API, Arm, ArmError
 
 CLASSIC_SKUS = {"Developer", "Basic", "Standard", "Premium", "Consumption"}
 
@@ -29,11 +29,24 @@ def is_classic(sku: str) -> bool:
     return sku in CLASSIC_SKUS  # v2 SKUs are BasicV2 / StandardV2 / PremiumV2
 
 
-def advisory_impacted(arm: Arm, subscription_id: str, tracking_id: str) -> tuple[set[str] | None, str | None]:
-    """Resource ids the Service Health event lists as impacted in this subscription.
+SEC_ADVISORY_API = "2025-05-01"
 
-    Returns (None, reason) when the caller lacks the role to read impacted resources
-    (needs Owner/Contributor or Microsoft.ResourceHealth/events/fetchEventDetails/action).
+
+def _post_list(arm: Arm, path: str, api_version: str) -> list[dict]:
+    items, url = [], path
+    while url:
+        page = arm.request("POST", url, api_version) if url == path else arm.request("GET", url)
+        items.extend(page.get("value", []))
+        url = page.get("nextLink")
+    return items
+
+
+def advisory_impacted(arm: Arm, subscription_id: str, tracking_id: str) -> tuple[set[str] | None, str | None]:
+    """Resource ids the Service Health security advisory lists as impacted in this subscription.
+
+    Uses listSecurityAdvisoryImpactedResources (security advisories), falling back to the
+    generic impactedResources endpoint. Needs Service Health Security Reader, Owner/Contributor,
+    or Microsoft.ResourceHealth/events/listSecurityAdvisoryImpactedResources/action.
     """
     path = f"/subscriptions/{subscription_id}/providers/Microsoft.ResourceHealth/events/{tracking_id}"
     event, err = arm.try_get(path, HEALTH_API)
@@ -41,13 +54,18 @@ def advisory_impacted(arm: Arm, subscription_id: str, tracking_id: str) -> tuple
         return set(), None  # event not raised for this subscription
     if err:
         return None, f"event read failed ({err})"
-    items, err = arm.try_list(f"{path}/impactedResources", HEALTH_API)
-    if err:
-        # Event exists for the sub but resource-level detail is restricted: treat whole sub as impacted.
-        return {"*"}, f"impacted resources not readable ({err}); subscription is listed on the event"
+    try:
+        items = _post_list(arm, f"{path}/listSecurityAdvisoryImpactedResources", SEC_ADVISORY_API)
+    except ArmError as e:
+        items, err = arm.try_list(f"{path}/impactedResources", HEALTH_API)
+        if err:
+            # Event exists for the sub but resource-level detail is restricted: treat whole sub as impacted.
+            return {"*"}, (f"impacted resources not readable ({e.status}/{err}); subscription is listed on "
+                           "the event - grant Service Health Security Reader to see resource-level detail")
     ids = set()
     for it in items:
-        target = (it.get("properties") or {}).get("targetResourceId") or it.get("id", "")
+        props = it.get("properties") or {}
+        target = props.get("targetResourceId") or props.get("resourceId") or it.get("id", "")
         ids.add(target.lower())
     return ids or {"*"}, None
 
