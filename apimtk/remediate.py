@@ -9,9 +9,10 @@ Safety model
 """
 from __future__ import annotations
 
+import getpass
 from typing import Callable
 
-from .arm import Arm
+from .arm import Arm, ArmError
 
 IFMATCH = {"If-Match": "*"}
 
@@ -29,15 +30,16 @@ def disable_tenant_access(arm: Arm, sid: str, **_):
 
 
 def regen_tenant_keys(arm: Arm, sid: str, **_):
-    for kind in ("access", "gitAccess"):
+    # Direct management API keys: tenant/access/regenerate*; Git keys: tenant/access/git/regenerate*
+    for base in ("tenant/access", "tenant/access/git"):
         for k in ("Primary", "Secondary"):
-            arm.request("POST", f"{sid}/tenant/{kind}/regenerate{k}Key", write=True)
+            arm.request("POST", f"{sid}/{base}/regenerate{k}Key", write=True)
 
 
-def regen_sub_keys(arm: Arm, sid: str, which: str = "secondary", subs: list[str] | None = None,
+def regen_sub_keys(arm: Arm, sid: str, which: str | None = None, subs: list[str] | None = None,
                    include_all_access: bool = True, **_):
-    """Regenerate ONE key of each subscription. Run 'secondary' first, let apps
-    switch to it, then run 'primary'."""
+    """Regenerate ONE key of each subscription. Microsoft's order: move apps to the secondary
+    key, regenerate 'primary', move apps to the new primary, then regenerate 'secondary'."""
     if which not in ("primary", "secondary"):
         raise ValueError("which must be primary or secondary")
     targets = subs or [s["name"] for s in arm.list(f"{sid}/subscriptions")
@@ -61,6 +63,23 @@ def link_keyvault(arm: Arm, sid: str, named_value: str, secret_uri: str,
     body = {"properties": {"displayName": p.get("displayName", named_value), "secret": True,
                            "keyVault": kv, "tags": p.get("tags") or []}}
     arm.request("PUT", f"{sid}/namedValues/{named_value}", body=body, headers=IFMATCH, write=True)
+
+
+PROVIDER_PATHS = {"oauth2": "authorizationServers", "oidc": "openidConnectProviders", "idp": "identityProviders"}
+
+
+def update_client_secret(arm: Arm, sid: str, provider: str | None = None, secret_reader=getpass.getpass, **_):
+    """Set a new client secret on an OAuth 2.0 server, OpenID Connect provider or portal identity
+    provider. Create the secret at the issuer first; remove the old one there after testing."""
+    kind, _, pid = (provider or "").partition(":")
+    if kind not in PROVIDER_PATHS or not pid:
+        raise ValueError("provider must be oauth2:<id>, oidc:<id> or idp:<type>")
+    path = f"{sid}/{PROVIDER_PATHS[kind]}/{pid}"
+    arm.get(path)  # fail early if it doesn't exist
+    secret = "<new secret>" if arm.dry_run else secret_reader("  New client secret (input hidden): ")
+    if not secret:
+        raise ValueError("empty secret")
+    arm.request("PATCH", path, body={"properties": {"clientSecret": secret}}, headers=IFMATCH, write=True)
 
 
 def delete_default_products(arm: Arm, sid: str, **_):
@@ -94,6 +113,7 @@ ACTIONS: dict[str, tuple[Callable, str]] = {
     "regen-tenant-keys": (regen_tenant_keys, "Regenerate direct-management and Git access keys"),
     "regen-sub-keys": (regen_sub_keys, "Regenerate one key (primary|secondary) of each active subscription - BREAKS apps still using it"),
     "link-keyvault": (link_keyvault, "Convert a named value to a Key Vault reference"),
+    "update-client-secret": (update_client_secret, "Set a new client secret on an OAuth 2.0 / OpenID Connect / identity provider"),
     "delete-default-products": (delete_default_products, "Delete Starter/Unlimited products and their subscriptions"),
     "disable-portal-signup": (disable_portal_signup, "Disable developer portal self sign-up"),
     "enable-managed-identity": (enable_managed_identity, "Enable system-assigned managed identity"),
@@ -111,7 +131,13 @@ def run(arm: Arm, sid: str, actions: list[str], yes: bool, **kw) -> list[dict]:
             print("  skipped")
             continue
         start = len(arm.log)
-        fn(arm, sid, **kw)
+        try:
+            fn(arm, sid, **kw)
+        except (ArmError, ValueError) as e:
+            arm.failed.append(a)
+            arm.log.append({"action": a, "error": str(e)[:300], "applied": False})
+            print(f"  FAILED: {str(e)[:300]}")
         for entry in arm.log[start:]:
-            print(f"  {'SENT' if entry['applied'] else 'would send'}: {entry['method']} {entry['url']}")
+            if "method" in entry:
+                print(f"  {'SENT' if entry['applied'] else 'would send'}: {entry['method']} {entry['url']}")
     return arm.log

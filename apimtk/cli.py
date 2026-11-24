@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from . import assess, hunt, inventory, remediate, report
@@ -25,22 +26,28 @@ def _load(path: Path):
 def cmd_assess(a) -> list[dict]:
     rows = assess.run(Arm(), a.subscription, a.tracking_id)
     _save(rows, a.out / "assess.json")
-    print(f"\n{'PRI':4} {'INSTANCE':40} {'SKU':12} {'CLASSIC':8} ADVISORY")
+    print(f"\n{'PRI':4} {'INSTANCE':40} {'SKU':12} {'AFFECTED':9} ADVISORY")
     for r in sorted(rows, key=lambda x: (x["priority"], x["name"])):
-        print(f"{r['priority']:4} {r['name'][:40]:40} {r['sku']:12} {str(r['classic']):8} {r['inAdvisory']}")
+        print(f"{r['priority']:4} {r['name'][:40]:40} {r['sku']:12} {str(r['affectedTier']):9} {r['inAdvisory']}")
     return rows
 
 
 def cmd_inventory(a) -> list[dict]:
+    if a.since:
+        try:
+            date.fromisoformat(a.since)
+        except ValueError:
+            sys.exit(f"--since must be YYYY-MM-DD, got {a.since!r}")
     rows = _load(a.out / "assess.json")
     if a.instance:
         rows = [r for r in rows if r["name"] in a.instance or r["id"] in a.instance]
-    data = inventory.run(Arm(), rows, deep=a.deep, only_classic=not a.include_v2)
+    data = inventory.run(Arm(), rows, since=a.since, include_unaffected=a.include_unaffected,
+                         runtime_check=not a.no_runtime_check)
     _save(data, a.out / "inventory.json")
     for d in data:
         s = d["summary"]
         print(f"  {d['instance']['name']:40} critical={s['Critical']} high={s['High']} "
-              f"secretsInApim={d['secretsInApim']} subs={d['subscriptionCount']}")
+              f"credentials={d['credentialCount']} runtime={d['runtimeStatus']}")
     return data
 
 
@@ -56,7 +63,7 @@ def cmd_report(a):
 
 def cmd_run(a):
     cmd_assess(a)
-    a.instance, a.include_v2 = None, False
+    a.instance, a.include_unaffected = None, False
     cmd_inventory(a)
     cmd_report(a)
 
@@ -78,13 +85,23 @@ def cmd_remediate(a):
         sys.exit("Choose --action (repeatable) or --containment. Actions: " + ", ".join(remediate.ACTIONS))
     if "link-keyvault" in actions and not (a.named_value and a.secret_uri):
         sys.exit("link-keyvault needs --named-value and --secret-uri")
+    if "regen-sub-keys" in actions and not a.which:
+        sys.exit("regen-sub-keys needs --which. Microsoft's order: move apps to the secondary key, "
+                 "--which primary, move apps to the new primary key, --which secondary")
+    if "update-client-secret" in actions and not a.provider:
+        sys.exit("update-client-secret needs --provider oauth2:<id> | oidc:<id> | idp:<type>")
     arm = Arm(dry_run=not a.apply)
     if a.apply:
         print("!! APPLY MODE - changes will be sent to Azure.")
     remediate.run(arm, a.instance, actions, a.yes, which=a.which, subs=a.sub,
                   include_all_access=not a.skip_all_access, named_value=a.named_value,
-                  secret_uri=a.secret_uri, identity_client_id=a.identity_client_id)
-    _save(arm.log, a.out / "remediation-log.json")
+                  secret_uri=a.secret_uri, identity_client_id=a.identity_client_id, provider=a.provider)
+    log_path = a.out / "remediation-log.json"
+    history = _load(log_path) if log_path.exists() else []
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    _save(history + [{"time": stamp, "instance": a.instance, **e} for e in arm.log], log_path)
+    if arm.failed:
+        sys.exit(f"\n{len(arm.failed)} action(s) failed: {', '.join(arm.failed)}")
 
 
 def cmd_demo(a):
@@ -105,15 +122,21 @@ def main(argv=None):
         x.add_argument("--tracking-id", default=DEFAULT_TRACKING)
         x.add_argument("--cve", default="", help="reference shown in the report title, e.g. CVE-2026-35425")
 
-    x = sp.add_parser("assess", help="01 find APIM instances, Classic vs v2, advisory membership")
+    x = sp.add_parser("assess", help="01 find APIM instances, affected tier, advisory membership")
     x.add_argument("--subscription", action="append", help="limit to subscription id (repeatable)")
     x.add_argument("--tracking-id", default=DEFAULT_TRACKING, help="Service Health tracking id ('' to skip)")
     x.set_defaults(fn=cmd_assess)
 
-    x = sp.add_parser("inventory", help="02 secrets, keys and risky settings per instance")
+    def common_inventory(x):
+        x.add_argument("--since", help="flag users, subscriptions and Activity log changes since this date "
+                                       "(YYYY-MM-DD, default: 89 days ago)")
+        x.add_argument("--no-runtime-check", action="store_true",
+                       help="skip reading RuntimeVersion from each gateway's status page")
+
+    x = sp.add_parser("inventory", help="02 credentials, signs of tampering and risky settings per instance")
     x.add_argument("--instance", action="append", help="instance name or resource id (repeatable)")
-    x.add_argument("--deep", action="store_true", help="also scan global/API/fragment policies for {{named value}} usage")
-    x.add_argument("--include-v2", action="store_true")
+    x.add_argument("--include-unaffected", action="store_true", help="also scan Consumption and v2 instances")
+    common_inventory(x)
     x.set_defaults(fn=cmd_inventory)
 
     x = sp.add_parser("report", help="Excel tracker + Markdown summary from assess/inventory output")
@@ -122,7 +145,7 @@ def main(argv=None):
 
     x = sp.add_parser("run", help="assess + inventory + report in one go (read-only)")
     x.add_argument("--subscription", action="append")
-    x.add_argument("--deep", action="store_true")
+    common_inventory(x)
     common_report(x)
     x.set_defaults(fn=cmd_run)
 
@@ -140,12 +163,13 @@ def main(argv=None):
     x.add_argument("--containment", action="store_true", help="disable-tenant-access + regen-tenant-keys + enable-managed-identity")
     x.add_argument("--apply", action="store_true", help="send changes (default is dry run)")
     x.add_argument("--yes", action="store_true", help="do not prompt per action")
-    x.add_argument("--which", default="secondary", choices=["primary", "secondary"], help="for regen-sub-keys")
+    x.add_argument("--which", choices=["primary", "secondary"], help="for regen-sub-keys (required)")
     x.add_argument("--sub", action="append", help="subscription name(s) for regen-sub-keys (default: all active)")
     x.add_argument("--skip-all-access", action="store_true")
     x.add_argument("--named-value", help="for link-keyvault")
     x.add_argument("--secret-uri", help="versionless Key Vault secret URI for link-keyvault")
     x.add_argument("--identity-client-id", help="user-assigned identity client id for Key Vault access")
+    x.add_argument("--provider", help="for update-client-secret: oauth2:<id>, oidc:<id> or idp:<type>")
     x.set_defaults(fn=cmd_remediate)
 
     x = sp.add_parser("demo", help="offline: build a sample report from test fixtures")

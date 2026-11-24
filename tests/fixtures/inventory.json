@@ -11,7 +11,9 @@
       "capacity": 1,
       "vnetType": "Internal",
       "identityType": "SystemAssigned",
+      "gatewayUrl": "https://apim-contoso-prod-001.azure-api.net",
       "classic": true,
+      "affectedTier": true,
       "inAdvisory": "Yes",
       "advisoryNote": "",
       "priority": "P1"
@@ -20,10 +22,52 @@
     "findings": [
       {
         "severity": "Critical",
+        "area": "URL",
+        "item": "backend:func: ?code",
+        "detail": "Key or signature written into a backend URL",
+        "action": "Rotate at source (Function key, SAS, ...); move it to a Key Vault named value"
+      },
+      {
+        "severity": "Critical",
+        "area": "Backend",
+        "item": "masked: query code",
+        "detail": "Credential written directly into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value"
+      },
+      {
+        "severity": "Critical",
+        "area": "Backend",
+        "item": "legacy: header x-api-key",
+        "detail": "Credential written directly into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value"
+      },
+      {
+        "severity": "Critical",
+        "area": "Policy",
+        "item": "policy:global: set-header \"api-key\"",
+        "detail": "Credential written directly into policy XML",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}"
+      },
+      {
+        "severity": "Critical",
+        "area": "Policy",
+        "item": "operation:orders/create: authentication-basic password=",
+        "detail": "Credential written directly into policy XML",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}"
+      },
+      {
+        "severity": "Critical",
         "area": "Named value",
         "item": "embedding-api-key",
         "detail": "Key-like value stored in clear text",
         "action": "Rotate at source now; store in Key Vault; recreate as Key Vault named value"
+      },
+      {
+        "severity": "High",
+        "area": "Logger",
+        "item": "logger: eh-logger",
+        "detail": "Event Hubs connection string stored in APIM (named value Logger-Credentials--eh01)",
+        "action": "Renew the Event Hubs key; better: switch the logger to managed identity"
       },
       {
         "severity": "High",
@@ -41,10 +85,10 @@
       },
       {
         "severity": "High",
-        "area": "Subscription keys",
-        "item": "2 active subscriptions",
-        "detail": "Keys may have been read before the fix",
-        "action": "Map client apps to subscriptions; regenerate secondary -> swap -> regenerate primary"
+        "area": "Named value",
+        "item": "Logger-Credentials--eh01",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
       },
       {
         "severity": "High",
@@ -54,10 +98,94 @@
         "action": "Regenerate both keys; never use in apps"
       },
       {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "2 active subscriptions",
+        "detail": "Subscription keys are listed in the advisory",
+        "action": "Map apps to subscriptions; secondary -> regenerate primary -> primary -> regenerate secondary"
+      },
+      {
+        "severity": "High",
+        "area": "Developer portal",
+        "item": "identity provider: aad",
+        "detail": "Client secret stored in APIM (listed in the advisory)",
+        "action": "Create a new client secret at the provider; update APIM; remove the old secret"
+      },
+      {
+        "severity": "High",
+        "area": "Developer portal",
+        "item": "OAuth 2.0 server: oauth-test-console",
+        "detail": "OAuth 2.0 authorization server client secret stored in APIM",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret"
+      },
+      {
+        "severity": "High",
+        "area": "Developer portal",
+        "item": "OpenID Connect provider: entra-oidc",
+        "detail": "OpenID Connect client secret stored in APIM (listed in the advisory)",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret"
+      },
+      {
+        "severity": "Medium",
+        "area": "Backend",
+        "item": "legacy: client certificate",
+        "detail": "Backend authenticates with a client certificate",
+        "action": "Reissue the certificate; store it in Key Vault"
+      },
+      {
+        "severity": "Medium",
+        "area": "Named value",
+        "item": "1 Key Vault references",
+        "detail": "Values can be read through policies or tracing by anyone who could manage APIM",
+        "action": "Rotate the referenced secrets at source and add new versions in Key Vault"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: App A",
+        "detail": "Created 2026-11-18 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Management plane",
+        "item": "tenant/access",
+        "detail": "Disabled - regenerate its keys anyway (tokens are listed in the advisory)",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Medium",
+        "area": "Management plane",
+        "item": "tenant/gitAccess",
+        "detail": "Disabled - regenerate its keys anyway (tokens are listed in the advisory)",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Medium",
+        "area": "Certificates",
+        "item": "legacy-client",
+        "detail": "Certificate with private key uploaded to APIM",
+        "action": "Reissue the certificate; store it in Key Vault and reference it"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "user: new.user@example.net",
+        "detail": "Registered 2026-11-17 - confirm you know this user",
+        "action": "Block or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "Secret reads in Activity log",
+        "detail": "1 secret reads by 11111111-aaaa-bbbb-cccc-000000000001",
+        "action": "Confirm each caller is expected"
+      },
+      {
         "severity": "Medium",
         "area": "Developer portal",
         "item": "Username/password sign-up",
-        "detail": "Self sign-up enabled (see CVE-2025-66390 behaviour)",
+        "detail": "Self sign-up enabled",
         "action": "Disable sign-up; prefer Entra ID identity provider only"
       },
       {
@@ -69,26 +197,181 @@
       },
       {
         "severity": "Info",
-        "area": "Management plane",
-        "item": "tenant/access",
-        "detail": "Disabled - still regenerate its keys after the advisory",
-        "action": "remediate: regen-tenant-keys"
+        "area": "Logger",
+        "item": "logger: appinsights",
+        "detail": "Application Insights key stored in APIM",
+        "action": "Ingestion-only key, not an access credential; prefer Entra authentication for ingestion"
       },
       {
         "severity": "Info",
-        "area": "Management plane",
-        "item": "tenant/gitAccess",
-        "detail": "Disabled - still regenerate its keys after the advisory",
-        "action": "remediate: regen-tenant-keys"
+        "area": "Review changes",
+        "item": "Management operations in Activity log",
+        "detail": "1 operations by 1 callers since 2026-11-01",
+        "action": "Review the Recent changes tab for anything you didn't do"
       },
       {
         "severity": "Info",
         "area": "Tier",
         "item": "Premium",
-        "detail": "Classic tier (advisory scope)",
-        "action": "Plan migration to v2 tier where available"
+        "detail": "Classic tier named in the advisory",
+        "action": "Plan migration to a v2 tier where available"
       }
     ],
+    "credentials": [
+      {
+        "kind": "Backend credential",
+        "name": "legacy: header x-api-key",
+        "where": "backend:legacy",
+        "stored": "Written into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Backend credential",
+        "name": "masked: query code",
+        "where": "backend:masked",
+        "stored": "Written into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in URL",
+        "name": "backend:func: ?code",
+        "where": "backend:func",
+        "stored": "Written into the URL",
+        "action": "Rotate at source (Function key, SAS, ...); move it to a Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in policy",
+        "name": "operation:orders/create: authentication-basic password=",
+        "where": "operation:orders/create",
+        "stored": "Written into the policy",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in policy",
+        "name": "policy:global: set-header \"api-key\"",
+        "where": "policy:global",
+        "stored": "Written into the policy",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Named value",
+        "name": "embedding-api-key",
+        "where": "-",
+        "stored": "Clear text in APIM",
+        "action": "Rotate at source now; store in Key Vault; recreate as Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Identity provider secret",
+        "name": "identity provider: aad",
+        "where": "Developer portal > Identities",
+        "stored": "Stored in APIM",
+        "action": "Create a new client secret at the provider; update APIM; remove the old secret",
+        "severity": "High"
+      },
+      {
+        "kind": "Named value",
+        "name": "5f1c0e2a9b7d4e3f8a6b1c2d",
+        "where": "backend:aoai",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "Named value",
+        "name": "Logger-Credentials--eh01",
+        "where": "logger:eh-logger",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "Named value",
+        "name": "gpt-api-key",
+        "where": "api:orders",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "OAuth 2.0 client secret",
+        "name": "OAuth 2.0 server: oauth-test-console",
+        "where": "Developer portal > OAuth 2.0 + OpenID Connect",
+        "stored": "Stored in APIM",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret",
+        "severity": "High"
+      },
+      {
+        "kind": "OpenID Connect client secret",
+        "name": "OpenID Connect provider: entra-oidc",
+        "where": "Developer portal > OAuth 2.0 + OpenID Connect",
+        "stored": "Stored in APIM",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: App A",
+        "where": "products/ai",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: Built-in all-access subscription",
+        "where": "apim-contoso-prod-001/apis",
+        "stored": "Stored in APIM",
+        "action": "Regenerate both keys; never use in apps",
+        "severity": "High"
+      },
+      {
+        "kind": "Certificate",
+        "name": "certificate: legacy-client",
+        "where": "Certificates",
+        "stored": "Uploaded to APIM",
+        "action": "Reissue at the CA; store in Key Vault",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Client certificate",
+        "name": "legacy: client certificate",
+        "where": "backend:legacy",
+        "stored": "Certificate in APIM",
+        "action": "Reissue the certificate; store it in Key Vault",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Direct management API keys",
+        "where": "tenant/access",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Git access keys",
+        "where": "tenant/gitAccess",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Named value",
+        "name": "llm-api-key",
+        "where": "-",
+        "stored": "Key Vault reference",
+        "action": "Rotate the secret at source; add a new version in Key Vault",
+        "severity": "Medium"
+      }
+    ],
+    "since": "2026-11-01",
     "namedValues": [
       {
         "name": "embedding-api-key",
@@ -138,7 +421,7 @@
         "length": null,
         "type": "Secret (stored in APIM)",
         "risk": "Rotate + move to Key Vault",
-        "usedBy": ""
+        "usedBy": "api:orders"
       },
       {
         "name": "5f1c0e2a9b7d4e3f8a6b1c2d",
@@ -151,13 +434,33 @@
         "usedBy": "backend:aoai"
       },
       {
+        "name": "Logger-Credentials--eh01",
+        "displayName": "Logger-Credentials--eh01",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": "logger:eh-logger"
+      },
+      {
+        "name": "Logger-Credentials--ai01",
+        "displayName": "Logger-Credentials--ai01",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "OK (Application Insights ingestion key)",
+        "usedBy": "logger:appinsights"
+      },
+      {
         "name": "llm-api-key",
         "displayName": "llm-api-key",
         "secret": true,
         "keyVaultSecretId": "https://kv-contoso.vault.azure.net/secrets/llm-api-key",
         "length": null,
         "type": "KeyVault",
-        "risk": "OK",
+        "risk": "Rotate in Key Vault",
         "usedBy": ""
       }
     ],
@@ -165,8 +468,43 @@
       {
         "name": "aoai",
         "url": "https://aoai.contoso.example/openai",
-        "usesCredentials": true,
-        "authorization": false
+        "usesCredentials": true
+      },
+      {
+        "name": "func",
+        "url": "https://func.contoso.example/api/run?code=***&x=***",
+        "usesCredentials": false
+      },
+      {
+        "name": "masked",
+        "url": "https://masked.contoso.example",
+        "usesCredentials": true
+      },
+      {
+        "name": "legacy",
+        "url": "https://legacy.contoso.example",
+        "usesCredentials": true
+      }
+    ],
+    "apis": [
+      {
+        "name": "orders",
+        "path": "orders",
+        "serviceUrl": "https://backend.contoso.example/api",
+        "subscriptionRequired": true
+      }
+    ],
+    "policiesScanned": 3,
+    "loggers": [
+      {
+        "name": "eh-logger",
+        "type": "azureEventHub",
+        "managedIdentity": false
+      },
+      {
+        "name": "appinsights",
+        "type": "applicationInsights",
+        "managedIdentity": false
       }
     ],
     "subscriptions": [
@@ -178,7 +516,8 @@
           "apis"
         ],
         "state": "active",
-        "owner": ""
+        "owner": "",
+        "created": "2024-01-10T00:00:00Z"
       },
       {
         "name": "app-a",
@@ -188,7 +527,8 @@
           "ai"
         ],
         "state": "active",
-        "owner": "1"
+        "owner": "1",
+        "created": "2026-11-18T03:12:00Z"
       },
       {
         "name": "app-b",
@@ -198,7 +538,8 @@
           "ai"
         ],
         "state": "suspended",
-        "owner": ""
+        "owner": "",
+        "created": null
       }
     ],
     "subscriptionCount": 3,
@@ -218,19 +559,72 @@
     ],
     "tenant_access_enabled": false,
     "tenant_gitAccess_enabled": false,
-    "portalSignupEnabled": true,
     "identityProviders": [
       "aad"
     ],
+    "oauth2Servers": [
+      "oauth-test-console"
+    ],
+    "openidConnectProviders": [
+      "entra-oidc"
+    ],
     "credentialManager": [],
+    "certificates": [
+      {
+        "name": "legacy-client",
+        "subject": "CN=legacy",
+        "expires": "2027-01-01T00:00:00Z",
+        "keyVault": false
+      }
+    ],
+    "users": [
+      {
+        "name": "1",
+        "email": "admin@contoso.example",
+        "state": "active",
+        "registered": "2024-01-10T00:00:00Z",
+        "identities": [
+          "Azure"
+        ]
+      },
+      {
+        "name": "u-new",
+        "email": "new.user@example.net",
+        "state": "active",
+        "registered": "2026-11-17T22:40:00.1055076Z",
+        "identities": [
+          "Basic"
+        ]
+      }
+    ],
+    "recentChanges": [
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/subscriptions/write",
+        "count": 1,
+        "first": "2026-11-18T03:12:01Z",
+        "last": "2026-11-18T03:12:01Z"
+      },
+      {
+        "caller": "11111111-aaaa-bbbb-cccc-000000000001",
+        "operation": "Microsoft.ApiManagement/service/namedValues/listValue/action",
+        "count": 1,
+        "first": "2026-11-17T23:01:00Z",
+        "last": "2026-11-17T23:01:00Z"
+      }
+    ],
+    "portalSignupEnabled": true,
+    "runtimeVersion": "0.53.32050.0",
+    "runtimeStatus": "patched",
     "summary": {
-      "Critical": 1,
-      "High": 4,
-      "Medium": 1,
+      "Critical": 6,
+      "High": 9,
+      "Medium": 9,
       "Low": 1,
       "Info": 3
     },
-    "secretsInApim": 3
+    "credentialCount": 19,
+    "secretsInApim": 4
   },
   {
     "instance": {
@@ -244,13 +638,22 @@
       "capacity": 1,
       "vnetType": "None",
       "identityType": "",
+      "gatewayUrl": "https://apim-contoso-dev-001.azure-api.net",
       "classic": true,
+      "affectedTier": true,
       "inAdvisory": "Yes",
       "advisoryNote": "impacted resources not readable (403/403); subscription is listed on the event - grant Service Health Security Reader to see resource-level detail",
       "priority": "P1"
     },
     "errors": {},
     "findings": [
+      {
+        "severity": "Critical",
+        "area": "Runtime",
+        "item": "0.52.31000.0",
+        "detail": "Gateway runtime is below NSM's patched thresholds",
+        "action": "Contact Microsoft support"
+      },
       {
         "severity": "High",
         "area": "Named value",
@@ -268,37 +671,37 @@
       {
         "severity": "High",
         "area": "Subscription keys",
-        "item": "1 active subscriptions",
-        "detail": "Keys may have been read before the fix",
-        "action": "Map client apps to subscriptions; regenerate secondary -> swap -> regenerate primary"
-      },
-      {
-        "severity": "High",
-        "area": "Subscription keys",
         "item": "Built-in all-access subscription",
         "detail": "Key grants access to every API",
         "action": "Regenerate both keys; never use in apps"
       },
       {
         "severity": "High",
+        "area": "Subscription keys",
+        "item": "1 active subscriptions",
+        "detail": "Subscription keys are listed in the advisory",
+        "action": "Map apps to subscriptions; secondary -> regenerate primary -> primary -> regenerate secondary"
+      },
+      {
+        "severity": "High",
         "area": "Management plane",
         "item": "tenant/access",
-        "detail": "Legacy direct management / Git access enabled",
+        "detail": "Direct management API enabled",
         "action": "Disable and regenerate keys (remediate: disable-tenant-access, regen-tenant-keys)"
       },
       {
         "severity": "High",
         "area": "Credential manager",
-        "item": "1 providers",
-        "detail": "OAuth client secrets stored in APIM",
-        "action": "Rotate client secrets in each identity provider"
+        "item": "credential provider: github",
+        "detail": "OAuth client secret stored in APIM",
+        "action": "Rotate the client secret at the identity provider; update the provider in APIM"
       },
       {
         "severity": "Medium",
         "area": "Identity",
         "item": "Managed identity",
         "detail": "No managed identity on APIM",
-        "action": "Enable system-assigned identity (needed for Key Vault refs and MI auth to Foundry)"
+        "action": "Enable system-assigned identity (needed for Key Vault refs and MI auth to backends)"
       },
       {
         "severity": "Info",
@@ -311,10 +714,53 @@
         "severity": "Info",
         "area": "Tier",
         "item": "Developer",
-        "detail": "Classic tier (advisory scope)",
-        "action": "Plan migration to v2 tier where available"
+        "detail": "Classic tier named in the advisory",
+        "action": "Plan migration to a v2 tier where available"
       }
     ],
+    "credentials": [
+      {
+        "kind": "Credential Manager secret",
+        "name": "credential provider: github",
+        "where": "Credential manager (github)",
+        "stored": "Stored in APIM",
+        "action": "Rotate the client secret at the identity provider; update the provider in APIM",
+        "severity": "High"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Direct management API keys",
+        "where": "tenant/access",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "High"
+      },
+      {
+        "kind": "Named value",
+        "name": "gpt-4o-api-key-LLM",
+        "where": "-",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "Named value",
+        "name": "llm-api-key-dev",
+        "where": "-",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: Built-in all-access subscription",
+        "where": "apim-contoso-dev-001/apis",
+        "stored": "Stored in APIM",
+        "action": "Regenerate both keys; never use in apps",
+        "severity": "High"
+      }
+    ],
+    "since": "2026-11-01",
     "namedValues": [
       {
         "name": "llm-api-key-dev",
@@ -338,6 +784,9 @@
       }
     ],
     "backends": [],
+    "apis": [],
+    "policiesScanned": 0,
+    "loggers": [],
     "subscriptions": [
       {
         "name": "master",
@@ -347,28 +796,37 @@
           "apis"
         ],
         "state": "active",
-        "owner": ""
+        "owner": "",
+        "created": null
       }
     ],
     "subscriptionCount": 1,
     "products": [],
     "tenant_access_enabled": true,
     "tenant_gitAccess_enabled": "unknown (404)",
-    "portalSignupEnabled": false,
     "identityProviders": [],
+    "oauth2Servers": [],
+    "openidConnectProviders": [],
     "credentialManager": [
       {
         "name": "github",
         "provider": "github"
       }
     ],
+    "certificates": [],
+    "users": [],
+    "recentChanges": [],
+    "portalSignupEnabled": false,
+    "runtimeVersion": "0.52.31000.0",
+    "runtimeStatus": "vulnerable",
     "summary": {
-      "Critical": 0,
+      "Critical": 1,
       "High": 6,
       "Medium": 1,
       "Low": 0,
       "Info": 2
     },
+    "credentialCount": 5,
     "secretsInApim": 2
   }
 ]

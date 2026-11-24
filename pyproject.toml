@@ -4,14 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "apim-advisory-toolkit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Assess, inventory, hunt, remediate and harden Azure API Management after the Nov 2026 Classic-tier security advisory"
+readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = ["requests>=2.31", "openpyxl>=3.1"]
 
 [project.optional-dependencies]
 identity = ["azure-identity>=1.15"]
 dev = ["pytest>=8"]
+
+[project.urls]
+Repository = "https://github.com/hamza-roujdami/apim-advisory-toolkit"
 
 [project.scripts]
 apimtk = "apimtk.cli:main"

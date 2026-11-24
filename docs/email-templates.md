@@ -32,8 +32,8 @@ Thanks for the call. Recap:
 
 **<instance B>, <instance C>**
 1. Check which client apps use which APIM subscription key
-2. Rotate the APIM subscription keys (secondary → switch → primary), including the built-in all-access key
-3. Rotate the backend keys at the source (<LLM provider / GPT / app secrets>), then update the Named values
+2. Rotate the APIM subscription keys (apps on secondary → regenerate primary → apps on primary → regenerate secondary), including the built-in all-access key
+3. Rotate the backend keys and client secrets at the source (<LLM provider / GPT / app secrets / identity providers>), then update APIM and revoke the old ones
 4. Move these keys to Key Vault and reference them from APIM
 5. Delete the default Starter/Unlimited products if they're unused
 

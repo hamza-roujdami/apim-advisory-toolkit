@@ -10,6 +10,7 @@ the remediate module, and only with --apply.
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -19,9 +20,22 @@ from typing import Any, Iterator
 import requests
 
 ARM = "https://management.azure.com"
-APIM_API = "2022-08-01"
+APIM_API = "2024-05-01"
 GRAPH_API = "2021-03-01"
 HEALTH_API = "2022-10-01"
+ACTIVITY_API = "2015-04-01"
+# NSM: open https://<gateway-hostname>/internal-status-0123456789abcdef and read RuntimeVersion
+RUNTIME_STATUS_PATH = "/internal-status-0123456789abcdef"
+SECRET_FIELDS = {"clientsecret", "value", "connectionstring", "password", "instrumentationkey"}
+
+
+def redact(obj: Any) -> Any:
+    """Copy of a request body with secret-bearing fields masked, for logs."""
+    if isinstance(obj, dict):
+        return {k: ("***" if k.lower() in SECRET_FIELDS and isinstance(v, str) else redact(v)) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [redact(v) for v in obj]
+    return obj
 
 
 class ArmError(RuntimeError):
@@ -62,6 +76,7 @@ class Arm:
     dry_run: bool = True
     session: requests.Session = field(default_factory=requests.Session)
     log: list[dict] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
 
     def _headers(self, extra: dict | None = None) -> dict:
         if not self.token:
@@ -81,12 +96,18 @@ class Arm:
                 body: Any = None, headers: dict | None = None, write: bool = False) -> Any:
         url = self._url(path, api_version)
         if write:
-            self.log.append({"method": method, "url": url, "body": body, "applied": not self.dry_run})
+            self.log.append({"method": method, "url": url, "body": redact(body), "applied": not self.dry_run})
             if self.dry_run:
                 return {"dryRun": True}
         for attempt in range(5):
-            r = self.session.request(method, url, headers=self._headers(headers),
-                                     data=json.dumps(body) if body is not None else None, timeout=60)
+            try:
+                r = self.session.request(method, url, headers=self._headers(headers),
+                                         data=json.dumps(body) if body is not None else None, timeout=60)
+            except (requests.Timeout, requests.ConnectionError) as e:
+                if attempt < 4:
+                    time.sleep(2 ** attempt)
+                    continue
+                raise ArmError(0, url, f"{type(e).__name__} after retries") from e
             if r.status_code in (429, 500, 502, 503, 504) and attempt < 4:
                 time.sleep(int(r.headers.get("Retry-After", 2 ** attempt)))
                 continue
@@ -122,6 +143,17 @@ class Arm:
             return list(self.list(path, api_version)), None
         except ArmError as e:
             return [], f"{e.status}"
+
+    def gateway_runtime_version(self, gateway_url: str) -> tuple[str | None, str | None]:
+        """Read RuntimeVersion from the gateway status page (NSM check). Returns (version, error)."""
+        try:
+            r = self.session.get(gateway_url.rstrip("/") + RUNTIME_STATUS_PATH, timeout=10)
+        except requests.RequestException as e:
+            return None, type(e).__name__
+        m = re.search(r"RuntimeVersion\W+(\d+(?:\.\d+)+)", r.text or "", re.I)
+        if m:
+            return m.group(1), None
+        return None, f"HTTP {r.status_code}, no RuntimeVersion"
 
     def resource_graph(self, query: str, subscriptions: list[str] | None = None) -> list[dict]:
         rows: list[dict] = []

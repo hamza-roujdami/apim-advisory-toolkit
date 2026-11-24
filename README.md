@@ -1,19 +1,80 @@
 # APIM advisory toolkit (`apimtk`)
 
-Helps any customer respond to the **November 2026 Azure API Management Classic-tiers security advisory**
-(Service Health tracking ID **MZK9-GH0**): find affected instances, list the secrets they expose, hunt for
-misuse, rotate safely, and harden so it can't happen again.
+A command-line tool for customers affected by the **Azure API Management (APIM) Classic tiers security advisory of
+November 2026** (Service Health tracking ID **MZK9-GH0**).
 
-> Microsoft closed the access path on 19 Nov 2026. Secrets stored in APIM before then may have been read, and
-> the platform fix does **not** invalidate them. Treat everything stored in a Classic APIM instance as exposed.
+Run it against your own Azure environment. In a few minutes it:
+- finds your APIM instances and tells you which ones are affected
+- lists every credential stored in them that you need to rotate (it never reads their values)
+- flags changes you may not have made
+- builds an Excel tracker for the rotation work
+
+It only reads from Azure. Nothing changes unless you run a `remediate` command with `--apply`.
 
 > **Disclaimer:** community tool, provided as-is under the MIT license. It is **not** an official Microsoft tool
-> and isn't supported by Microsoft. For official guidance, follow the Service Health advisory in your Azure portal
-> and open a support case. Run in dry-run mode first and test in a non-production subscription (see `lab/`).
+> and isn't supported by Microsoft. The advisory in your Azure portal (Service Health > Security advisories) is
+> the authoritative source.
 
-![Target architecture](docs/target-architecture.png)
+## Run it on your Azure environment
 
-## Reference architecture (target state)
+**You need:** Python 3.10 or later, the [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli), and
+the **Reader** role on the subscriptions that hold your APIM instances. Azure Cloud Shell (Bash) works too: it
+already has Python and the Azure CLI, and you're already signed in.
+
+**1. Install**
+```bash
+git clone https://github.com/hamza-roujdami/apim-advisory-toolkit.git
+cd apim-advisory-toolkit
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e .
+```
+
+**2. Sign in and run**
+```bash
+az login --tenant <your-tenant-id>
+apimtk run --customer Contoso
+```
+This scans every subscription you can read. To limit it, add `--subscription <id>` (repeatable).
+
+**3. Open the results** in the `out/` folder:
+
+| File | What it is |
+|---|---|
+| `APIM-advisory_Contoso_tracker.xlsx` | Your work tracker. Start with the **Credentials** tab |
+| `Contoso_report.md` | A short summary to paste into email or Teams |
+| `assess.json`, `inventory.json` | Raw results (never secret values) |
+
+The tracker tabs:
+- **Tracker:** one row per instance, with its priority, whether the advisory lists it, and its runtime check.
+- **Credentials:** everything to rotate, with columns for the date you rotated it and the date you revoked the old one.
+- **Findings:** every issue found, with the action to take.
+- **Recent changes:** operations on each instance from the Azure Activity log. Mark the ones you don't recognise.
+- **APIs & backends:** what sits behind each instance. Note the data or system each one reaches.
+
+**Optional:** to see whether the advisory lists your instances (rather than only your subscriptions), you also need
+the **Service Health Security Reader** role, Owner or Contributor ([Microsoft Learn][impacted]). Without it, the
+tracker marks the whole subscription as listed when the advisory names it.
+
+## Then work through the tracker
+
+Follow Microsoft's order for every credential ([Tech Community][rotate]):
+1. Create the replacement at the issuer (the backend, LLM provider or identity provider).
+2. Update APIM.
+3. Test.
+4. Revoke the old credential. Updating the value in APIM alone doesn't revoke anything.
+
+Also:
+- **Investigate.** Check the sign-in and access logs of every system those credentials unlock.
+  `apimtk hunt` gives you starting queries (see [Hunt](#hunt)).
+- **Harden.** Move secrets to Key Vault, use managed identities instead of keys, and turn off what you don't use
+  ([Tech Community][rotate], [Secure API Management][secure-apim]).
+
+[docs/RUNBOOK.md](docs/RUNBOOK.md) has a step-by-step checklist.
+
+## Target architecture (after hardening)
+
+Where to aim once the rotation is done, based on Microsoft's guidance for
+[securing API Management][secure-apim] and [named values in Key Vault][named-values]:
 
 ![Secure APIM reference architecture](docs/secure-apim-reference-architecture.png)
 
@@ -25,126 +86,166 @@ misuse, rotate safely, and harden so it can't happen again.
 | 4 Backends | Private endpoints; Foundry/AOAI via APIM managed identity with key auth disabled; third-party keys only in Key Vault |
 | 5 Control plane | Entra ID + PIM + Conditional Access for admins, least-privilege RBAC (policy edit = identity), Key Vault audit, Azure Policy, Defender for APIs, Log Analytics / Sentinel |
 
-## What's in the box
+`harden/` has example Bicep, Azure Policy and an AI gateway policy for parts of this.
 
-| Phase | Command | What it does | Changes Azure? |
-|---|---|---|---|
-| 01 Assess | `apimtk assess` | Lists every APIM instance (Resource Graph), tags Classic vs v2, checks advisory membership per subscription | No |
-| 02 Inventory | `apimtk inventory [--deep]` | Named values (plain values that look like keys, secrets in APIM, Key Vault references), where each is used, subscriptions, all-access key, default products, direct management API, portal sign-up, Credential Manager, managed identity | No |
-| Report | `apimtk report` | Excel tracker (Tracker / Findings / Named values) + Markdown summary | No |
-| 03 Hunt | `apimtk hunt` | KQL pack: APIM secret reads, new callers, new gateway sources, Key Vault reads, SPN sign-ins, Foundry/AOAI usage | No |
-| 04 Remediate | `apimtk remediate` | Disable tenant access, regenerate tenant keys, secondary→primary subscription key swap, link named values to Key Vault, delete default products, disable sign-up, enable managed identity | **Only with `--apply`** |
-| 05 Harden | `harden/` | Azure Policy definitions, Bicep for Key Vault named values + managed identity to Foundry, reference AI gateway policy XML | You deploy |
+## The advisory in brief
 
-`apimtk run` = assess + inventory + report in one read-only pass.
+Every point comes from the [sources](#sources) at the end.
 
-## Quick start
+- On **18 Nov 2026** Microsoft identified an issue in APIM Classic tiers that "could allow unauthorized access to
+  certain management functionality if the service was not configured according to documented security best
+  practices". Microsoft **closed the access path on 19 Nov 2026**. ([BleepingComputer][bc], [The Hacker News][thn])
+- **Affected tiers:** Developer, Basic, Standard and Premium. **Not affected:** the Consumption tier and all v2
+  tiers. ([BleepingComputer][bc])
+- **What may have been exposed:** secrets stored in named values; client secrets of identity providers; client
+  secrets of OpenID Connect providers; subscription keys; tokens used to call the direct management API.
+  ([BleepingComputer][bc])
+- The fix "does not automatically invalidate credentials that may have been accessed before the fix was deployed".
+  Microsoft asks affected customers to rotate potentially exposed credentials, investigate suspicious activity and
+  review their logs. ([BleepingComputer][bc])
+- Norway's National Security Authority (NSM) advises everyone using APIM to **assume their secrets and named
+  values are exposed and rotate all of them**. ([NSM][nsm])
 
-```bash
-pip install -e ".[identity]"        # or just: pip install requests openpyxl  (+ az login)
-az login --tenant <customer-tenant>
+## What it checks
 
-apimtk --out out/contoso run --customer Contoso            # read-only, ~1-2 min per instance
-apimtk --out out/contoso run --customer Contoso --deep     # also map {{named values}} to policies
-apimtk --out out/contoso report --customer Contoso --cve CVE-XXXX-YYYY   # optional reference in title
-```
+Every credential type in Microsoft's rotation guide ([Tech Community][rotate]) becomes a row in the **Credentials** tab.
 
-Try it offline first: `apimtk --out out/demo demo --customer Contoso`
+| Credential | What apimtk finds |
+|---|---|
+| Named values | Secrets stored in APIM, plain values that look like keys, and Key Vault references, with where each is used. Rotate Key Vault references too: anyone who could manage APIM could read them through policies or tracing ([Microsoft Learn][named-values]) |
+| Subscription keys | Every active subscription, including the built-in all-access one |
+| Direct management API and Git access keys | Whether each is enabled; their keys are listed for regeneration either way |
+| Identity providers, OAuth 2.0 servers, OpenID Connect providers, Credential Manager | Each one's client secret |
+| Backend credentials | Keys written into backend headers, query parameters or authorization; keys in API service URLs (`?code=`, `sig=`, saved masked); client certificates |
+| Logger connection strings | Event Hubs loggers that use a connection string. Application Insights keys are reported as Info only: Microsoft says they "aren't security tokens or security keys" ([Microsoft Learn][ai-keys]) |
+| Credentials written into policies | Keys, passwords, SAS signatures and embedded certificates in global, product, API, operation and fragment policies |
+| Certificates | Certificates uploaded to APIM |
 
-Output in `out/contoso/`:
-- `assess.json`, `inventory.json`: raw results (no secret values, ever)
-- `<ref>_<customer>_tracker.xlsx`: send to the customer or track the work in it
-- `<customer>_report.md`: paste into email or Teams
+It also checks:
+- **Changes you may not have made:**
+  - subscriptions created and developer portal users registered recently
+  - write and secret-read operations in the Azure Activity log, which keeps 90 days
+- **The gateway runtime version**, against NSM's published thresholds ([NSM][nsm]). An instance below them is
+  flagged **Critical**: contact Microsoft support. Microsoft says the fix is already deployed to every
+  Microsoft-hosted instance ([BleepingComputer][bc]).
 
-## Test it on real Classic instances (lab)
+Useful options for `apimtk run`:
 
-`lab/` deploys two Developer-tier APIM instances seeded with every risk the toolkit looks for, then checks the results before and after remediation:
+| Option | Use it to |
+|---|---|
+| `--subscription <id>` | Scan only these subscriptions (repeatable) |
+| `--since 2026-10-01` | Flag changes since this date (default: as far back as the Activity log allows) |
+| `--no-runtime-check` | Skip the runtime check, for gateways only reachable inside a virtual network |
+| `--out <folder>` (before `run`) | Write the results somewhere other than `out/` |
 
-```bash
-./lab/run-lab.sh deploy you@contoso.com && ./lab/run-lab.sh before
-./lab/run-lab.sh fix && ./lab/run-lab.sh after && ./lab/run-lab.sh teardown
-```
-See [lab/README.md](lab/README.md).
+## Fix things (optional, dry run first)
 
-## Remediation (dry run first)
+The `remediate` command makes the APIM-side changes for one instance. Without `--apply` it only prints what it would
+send. With `--apply` it asks before each action, and it records every change in `out/remediation-log.json`. You need
+the API Management Service Contributor role on the instance.
 
 ```bash
 APIM=/subscriptions/<sub>/resourceGroups/<rg>/providers/Microsoft.ApiManagement/service/<name>
 
-# Containment: tenant access off + regenerate its keys + managed identity on
-apimtk remediate --instance $APIM --containment                 # prints what would be sent
-apimtk remediate --instance $APIM --containment --apply         # asks before each action
+# Containment: turn off the direct management API, regenerate its keys, enable managed identity.
+# The direct management API was retired in March 2025 (Microsoft Learn). Move anything that still calls it to Azure Resource Manager first.
+apimtk remediate --instance $APIM --containment          # dry run
+apimtk remediate --instance $APIM --containment --apply
 
-# Subscription keys - coordinate with app owners first!
-apimtk remediate --instance $APIM --action regen-sub-keys --which secondary --apply
-#   ...apps switch to the new secondary key...
+# Subscription keys, in Microsoft's order. Coordinate with app owners.
+#   1. Move each app to its secondary key, then:
 apimtk remediate --instance $APIM --action regen-sub-keys --which primary --apply
+#   2. Move each app to the new primary key, then:
+apimtk remediate --instance $APIM --action regen-sub-keys --which secondary --apply
 
-# Backend secret: rotate at the source (LLM provider / Foundry / Entra) -> store in Key Vault -> link
+# A secret you've already rotated at its source and stored in Key Vault: point the named value at it.
 apimtk remediate --instance $APIM --action link-keyvault \
-  --named-value embedding-api-key --secret-uri https://<kv>.vault.azure.net/secrets/embedding-api-key --apply
+  --named-value <name> --secret-uri https://<kv>.vault.azure.net/secrets/<name> --apply
+
+# OAuth 2.0 / OpenID Connect / identity provider: create the new secret at the issuer, then set it here.
+# You type it at a hidden prompt; the log records ***.
+apimtk remediate --instance $APIM --action update-client-secret --provider oidc:<id> --apply
+#   --provider oauth2:<id> | oidc:<id> | idp:<aad|aadB2C|google|...>
 ```
 
-Every write is recorded in `out/remediation-log.json`.
+Other actions: `delete-default-products`, `disable-portal-signup`. Run `apimtk remediate --help` for the list.
 
-## Permissions
+The toolkit never creates or rotates secrets at their source, so LLM provider, Foundry/Azure OpenAI, Event Hubs and
+app registration secrets are rotated by their owners. Keys written into policies or backends are fixed by hand: store
+them in Key Vault and reference them as `{{named value}}`.
 
-| Task | Minimum role |
-|---|---|
-| assess / inventory / report | Reader on the subscriptions + `API Management Service Reader` |
-| Advisory impacted resources | **Service Health Security Reader**, Owner/Contributor, or a custom role with `Microsoft.ResourceHealth/events/fetchEventDetails/action` and `.../listSecurityAdvisoryImpactedResources/action` |
-| hunt | Log Analytics Reader on the workspace |
-| remediate | `API Management Service Contributor` on the instance |
-| harden (Bicep) | Contributor + `User Access Administrator` (for role assignments) |
+## Hunt
 
-## Safety model
-- **Read-only by default.** Only `remediate --apply` writes, and it asks for confirmation on each action unless you pass `--yes`.
-- **No secret values.** The toolkit never calls `listValue` or `listSecrets`. Plain named values are checked in memory to spot clear-text keys, and only the name and verdict are kept.
-- **The toolkit doesn't rotate backend keys.** Third-party LLM provider, Foundry/AOAI and app registration secrets are rotated by their owners at the source. The toolkit then links the new Key Vault secret.
-
-## Layout
+```bash
+apimtk hunt --workspace-id <log-analytics-workspace-guid> --app-id <app-ids-whose-secrets-were-in-apim>
+apimtk hunt      # no workspace: writes the queries to out/hunt/ to paste into Log Analytics or Sentinel
 ```
-apimtk/            CLI + modules (arm, assess, inventory, hunt, remediate, report)
-kql/               hunting queries ({lookback}, {fix_date}, {app_ids} placeholders)
-harden/policy/     Azure Policy definitions (audit first, then deny)
-harden/bicep/      secure-ai-gateway.bicep: Key Vault named values, MI to Foundry, tenant access off
-harden/apim-policies/ ai-gateway-api-policy.xml: validate-azure-ad-token + MI + token limit
-lab/               seed.bicep + run-lab.sh + verify.py: end-to-end test on 2 real Classic instances
-docs/              RUNBOOK.md, email templates, target architecture
-tests/             offline tests against a fake tenant (pytest)
+Six queries: APIM operations, new callers, new gateway sources, Key Vault reads, service principal sign-ins, and
+Azure OpenAI/Foundry usage. You need the Log Analytics Reader role on the workspace.
+
+## Safety and limitations
+
+- **Read-only by default.** Only `remediate --apply` writes to Azure.
+- **No secret values are saved.** The toolkit never calls `listValue` or `listSecrets`. Plain named values, backend
+  settings and policies are checked in memory for keys written in clear text; only names, locations and verdicts
+  are saved.
+- **Treat the `out/` folder as sensitive:** it lists your instances, credential names and findings.
+- **It can't prove whether a credential was read.** A security researcher notes that direct management API calls
+  aren't recorded in the Activity log ([Anders Kristiansen][ak]). The tool looks for changes and later use.
+- **Spotting keys written in clear text is a heuristic.** Review the Credentials tab.
+- **The files in `harden/` are examples** and haven't been deployment-tested. Run `az bicep build` and `what-if` first.
+
+## Optional: try it before using it
+
+You don't need either of these to use the tool.
+- **Offline sample report** (no Azure needed): `apimtk --out out/demo demo --customer Contoso`
+- **Test lab:** [lab/](lab/README.md) deploys test APIM instances seeded with every scenario above into a sandbox
+  subscription, runs the tool, applies the fixes and checks the results. We use it to test the toolkit; it costs a
+  few dollars a day while it runs.
+
+## Sources
+
+About the advisory:
+- [BleepingComputer, 23 Nov 2026][bc]: quotes the Service Health advisory MZK9-GH0 and Microsoft's statements on
+  affected tiers and the fix.
+- [The Hacker News, 24 Nov 2026][thn]: quotes the advisory.
+- [NSM (Norwegian National Security Authority), 20 Nov 2026, updated 23 Nov][nsm]: recommended actions and the
+  runtime-version check (in Norwegian).
+- [Microsoft Tech Community, Rotating credentials in Azure API Management, 21 Nov 2026][rotate]: Microsoft's guide
+  to finding and rotating every credential type.
+- [Anders Kristiansen, 21 Nov 2026][ak]: researcher's analysis and hunting queries (community, not official).
+
+Microsoft documentation:
+- [Security advisories in Azure Service Health][sa-roles] and [Impacted resources from security advisories][impacted]
+- [Secure your Azure API Management deployment][secure-apim]
+- [Use named values in API Management policies (including Key Vault)][named-values]
+- [Subscriptions in API Management][subs]
+- [Direct management API retirement (March 2025)][direct-api]
+- [Use managed identities in API Management][mi]
+- [API Management v2 tiers overview][v2]
+- [Application Insights connection strings][ai-keys]
+
+[bc]: https://www.bleepingcomputer.com/news/security/microsoft-azure-flaw-exploited-to-steal-customers-api-credentials/
+[thn]: https://thehackernews.com/2026/11/microsoft-fixes-azure-api-management.html
+[nsm]: https://nsm.no/aktuelt/nsm-deler-tiltak-mot-sarbarhet-i-azure-api-management
+[rotate]: https://techcommunity.microsoft.com/blog/integrationsonazureblog/rotating-credentials-in-azure-api-management/4575478
+[ak]: https://anderskristiansen.com/post/2026/apim-legacy-access/
+[sa-roles]: https://learn.microsoft.com/azure/service-health/security-advisories-elevated-access
+[impacted]: https://learn.microsoft.com/azure/service-health/impacted-resources-security
+[secure-apim]: https://learn.microsoft.com/azure/api-management/secure-api-management
+[named-values]: https://learn.microsoft.com/azure/api-management/api-management-howto-properties
+[subs]: https://learn.microsoft.com/azure/api-management/api-management-subscriptions
+[direct-api]: https://learn.microsoft.com/azure/api-management/breaking-changes/direct-management-api-retirement-march-2025
+[mi]: https://learn.microsoft.com/azure/api-management/api-management-howto-use-managed-service-identity
+[v2]: https://learn.microsoft.com/azure/api-management/v2-service-tiers-overview
+[ai-keys]: https://learn.microsoft.com/azure/azure-monitor/app/connection-strings
+
+## For contributors
 ```
-
-## Status / limitations
-- The REST calls use APIM API version `2022-08-01`, Resource Health `2022-10-01`, and `2025-05-01` for security advisory impacted resources.
-- The Bicep and Policy files haven't been deployment-tested. Run `az bicep build` and `what-if` before using them, and check the Policy aliases in your tenant.
-- The advisory's access path was on Microsoft's platform, so the hunt queries can't prove whether a read happened. They look for **misuse** of the secrets afterwards.
-- The plain-value key detection is a heuristic. Review the Named values tab.
-
-## Official Microsoft references
-
-**The advisory and Service Health**
-- [Security advisories in Azure Service Health](https://learn.microsoft.com/azure/service-health/security-advisories-elevated-access): who can see which details
-- [Impacted resources from Azure security advisories](https://learn.microsoft.com/azure/service-health/impacted-resources-security): portal view and API
-- [Configure subscription or tenant access to security advisories](https://learn.microsoft.com/azure/service-health/security-advisories-add-subscription)
-- [Microsoft Security Response Center: Security Update Guide](https://msrc.microsoft.com/update-guide)
-
-**Securing API Management**
-- [Secure your Azure API Management deployment](https://learn.microsoft.com/azure/api-management/secure-api-management)
-- [Azure security baseline for API Management](https://learn.microsoft.com/security/benchmark/azure/baselines/api-management-security-baseline)
-- [Architecture best practices for API Management (Well-Architected)](https://learn.microsoft.com/azure/well-architected/service-guides/azure-api-management)
-- [Built-in Azure Policy definitions for API Management](https://learn.microsoft.com/azure/api-management/policy-reference)
-- [Direct management API retirement (March 2025)](https://learn.microsoft.com/azure/api-management/breaking-changes/direct-management-api-retirement-march-2025)
-- [Secure access to the developer portal](https://learn.microsoft.com/azure/api-management/secure-developer-portal-access)
-- [Monitor API Management](https://learn.microsoft.com/azure/api-management/monitor-api-management)
-
-**Secrets, keys and identity**
-- [Use named values in API Management policies (including Key Vault)](https://learn.microsoft.com/azure/api-management/api-management-howto-properties)
-- [Subscriptions in API Management (key management)](https://learn.microsoft.com/azure/api-management/api-management-subscriptions)
-- [Use managed identities in API Management](https://learn.microsoft.com/azure/api-management/api-management-howto-use-managed-service-identity)
-- [authentication-managed-identity policy](https://learn.microsoft.com/azure/api-management/authentication-managed-identity-policy)
-- [validate-azure-ad-token policy](https://learn.microsoft.com/azure/api-management/validate-azure-ad-token-policy)
-- [Rotate keys for Azure AI services](https://learn.microsoft.com/azure/ai-services/rotate-keys)
-
-**AI gateway**
-- [Authenticate and authorize access to LLM APIs with API Management](https://learn.microsoft.com/azure/api-management/api-management-authenticate-authorize-ai-apis)
-- [API Management v2 tiers overview](https://learn.microsoft.com/azure/api-management/v2-service-tiers-overview)
+apimtk/      the CLI (assess, inventory, report, hunt, remediate)
+kql/         hunting queries used by `apimtk hunt`
+harden/      example Azure Policy, Bicep and APIM policy (not deployment-tested)
+lab/         optional test environment (see lab/README.md)
+docs/        runbook, email templates, suggested target architecture
+tests/       offline tests against a fake tenant: pip install -e ".[dev]" && pytest
+```
