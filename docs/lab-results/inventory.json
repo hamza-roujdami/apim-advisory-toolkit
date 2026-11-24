@@ -1,0 +1,1528 @@
+[
+  {
+    "instance": {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-apimtk-lab/providers/Microsoft.ApiManagement/service/apimtk-lab-a-xxxxxx",
+      "name": "apimtk-lab-a-xxxxxx",
+      "resourceGroup": "rg-apimtk-lab",
+      "subscriptionId": "00000000-0000-0000-0000-000000000000",
+      "location": "uaenorth",
+      "sku": "Developer",
+      "capacity": 1,
+      "vnetType": "None",
+      "publicNetworkAccess": "Enabled",
+      "gatewayUrl": "https://apimtk-lab-a-xxxxxx.azure-api.net",
+      "developerPortalUrl": "https://apimtk-lab-a-xxxxxx.developer.azure-api.net",
+      "identityType": "SystemAssigned",
+      "subscriptionName": "sub-platform-shared",
+      "classic": true,
+      "affectedTier": true,
+      "inAdvisory": "No",
+      "advisoryNote": "",
+      "priority": "P3"
+    },
+    "errors": {},
+    "findings": [
+      {
+        "severity": "Critical",
+        "area": "Backend",
+        "item": "func: query code",
+        "detail": "Credential written directly into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value"
+      },
+      {
+        "severity": "Critical",
+        "area": "Backend",
+        "item": "legacy: header x-api-key",
+        "detail": "Credential written directly into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value"
+      },
+      {
+        "severity": "Critical",
+        "area": "URL",
+        "item": "api:export: ?sv, sp, sig",
+        "detail": "Key or signature written into a backend URL",
+        "action": "Rotate at source (Function key, SAS, ...); move it to a Key Vault named value"
+      },
+      {
+        "severity": "Critical",
+        "area": "Policy",
+        "item": "policy:global: set-header \"api-key\"",
+        "detail": "Credential written directly into policy XML",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}"
+      },
+      {
+        "severity": "Critical",
+        "area": "Policy",
+        "item": "product:ai-lab: set-header \"x-partner-key\"",
+        "detail": "Credential written directly into policy XML",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}"
+      },
+      {
+        "severity": "Critical",
+        "area": "Policy",
+        "item": "operation:orders/create: authentication-basic password=",
+        "detail": "Credential written directly into policy XML",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}"
+      },
+      {
+        "severity": "Critical",
+        "area": "Policy",
+        "item": "fragment:legacy-auth: authentication-basic password=",
+        "detail": "Credential written directly into policy XML",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}"
+      },
+      {
+        "severity": "Critical",
+        "area": "Named value",
+        "item": "embedding-api-key",
+        "detail": "Key-like value stored in clear text",
+        "action": "Rotate at source now; store in Key Vault; recreate as Key Vault named value"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "Built-in all-access subscription",
+        "detail": "Key grants access to every API",
+        "action": "Regenerate both keys; never use in apps"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "5 active subscriptions",
+        "detail": "Subscription keys are listed in the advisory",
+        "action": "Map apps to subscriptions; secondary -> regenerate primary -> primary -> regenerate secondary"
+      },
+      {
+        "severity": "High",
+        "area": "Developer portal",
+        "item": "identity provider: aad",
+        "detail": "Client secret stored in APIM (listed in the advisory)",
+        "action": "Create a new client secret at the provider; update APIM; remove the old secret"
+      },
+      {
+        "severity": "High",
+        "area": "Developer portal",
+        "item": "OAuth 2.0 server: oauth-test-console",
+        "detail": "OAuth 2.0 authorization server client secret stored in APIM",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret"
+      },
+      {
+        "severity": "High",
+        "area": "Developer portal",
+        "item": "OpenID Connect provider: entra-oidc",
+        "detail": "OpenID Connect client secret stored in APIM (listed in the advisory)",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret"
+      },
+      {
+        "severity": "High",
+        "area": "Credential manager",
+        "item": "credential provider: github",
+        "detail": "OAuth client secret stored in APIM",
+        "action": "Rotate the client secret at the identity provider; update the provider in APIM"
+      },
+      {
+        "severity": "Medium",
+        "area": "Backend",
+        "item": "mtls: client certificate",
+        "detail": "Backend authenticates with a client certificate",
+        "action": "Reissue the certificate; store it in Key Vault"
+      },
+      {
+        "severity": "Medium",
+        "area": "Named value",
+        "item": "2 Key Vault references",
+        "detail": "Values can be read through policies or tracing by anyone who could manage APIM",
+        "action": "Rotate the referenced secrets at source and add new versions in Key Vault"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: 6b0583a6c140950081070001",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: 6b0583a6c140950081070002",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: Built-in all-access subscription",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: 6b0588b946346109e8e1fc6c",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: App A",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Products",
+        "item": "ai-lab",
+        "detail": "Self-service subscription without approval",
+        "action": "Set approvalRequired=true"
+      },
+      {
+        "severity": "Medium",
+        "area": "Management plane",
+        "item": "tenant/access",
+        "detail": "Disabled - regenerate its keys anyway (tokens are listed in the advisory)",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Medium",
+        "area": "Management plane",
+        "item": "tenant/gitAccess",
+        "detail": "Disabled - regenerate its keys anyway (tokens are listed in the advisory)",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Medium",
+        "area": "Certificates",
+        "item": "lab-client-cert",
+        "detail": "Certificate with private key uploaded to APIM",
+        "action": "Reissue the certificate; store it in Key Vault and reference it"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "user: admin@contoso.example",
+        "detail": "Registered 2026-11-24 - confirm you know this user",
+        "action": "Block or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "user: lab-new-user@example.com",
+        "detail": "Registered 2026-11-24 - confirm you know this user",
+        "action": "Block or delete if unknown"
+      },
+      {
+        "severity": "Low",
+        "area": "Products",
+        "item": "starter",
+        "detail": "Default sample product present",
+        "action": "Delete if unused (remediate: delete-default-products)"
+      },
+      {
+        "severity": "Low",
+        "area": "Products",
+        "item": "unlimited",
+        "detail": "Default sample product present",
+        "action": "Delete if unused (remediate: delete-default-products)"
+      },
+      {
+        "severity": "Info",
+        "area": "Review changes",
+        "item": "Management operations in Activity log",
+        "detail": "288 operations by 3 callers since 2026-08-27",
+        "action": "Review the Recent changes tab for anything you didn't do"
+      },
+      {
+        "severity": "Info",
+        "area": "Tier",
+        "item": "Developer",
+        "detail": "Classic tier named in the advisory",
+        "action": "Plan migration to a v2 tier where available"
+      }
+    ],
+    "credentials": [
+      {
+        "kind": "Backend credential",
+        "name": "func: query code",
+        "where": "backend:func",
+        "stored": "Written into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Backend credential",
+        "name": "legacy: header x-api-key",
+        "where": "backend:legacy",
+        "stored": "Written into the backend",
+        "action": "Rotate at source; store in Key Vault; reference it as a Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in URL",
+        "name": "api:export: ?sv, sp, sig",
+        "where": "api:export",
+        "stored": "Written into the URL",
+        "action": "Rotate at source (Function key, SAS, ...); move it to a Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in policy",
+        "name": "fragment:legacy-auth: authentication-basic password=",
+        "where": "fragment:legacy-auth",
+        "stored": "Written into the policy",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in policy",
+        "name": "operation:orders/create: authentication-basic password=",
+        "where": "operation:orders/create",
+        "stored": "Written into the policy",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in policy",
+        "name": "policy:global: set-header \"api-key\"",
+        "where": "policy:global",
+        "stored": "Written into the policy",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential in policy",
+        "name": "product:ai-lab: set-header \"x-partner-key\"",
+        "where": "product:ai-lab",
+        "stored": "Written into the policy",
+        "action": "Rotate at source; store in Key Vault; replace with {{named value}}",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Named value",
+        "name": "embedding-api-key",
+        "where": "-",
+        "stored": "Clear text in APIM",
+        "action": "Rotate at source now; store in Key Vault; recreate as Key Vault named value",
+        "severity": "Critical"
+      },
+      {
+        "kind": "Credential Manager secret",
+        "name": "credential provider: github",
+        "where": "Credential manager (github)",
+        "stored": "Stored in APIM",
+        "action": "Rotate the client secret at the identity provider; update the provider in APIM",
+        "severity": "High"
+      },
+      {
+        "kind": "Identity provider secret",
+        "name": "identity provider: aad",
+        "where": "Developer portal > Identities",
+        "stored": "Stored in APIM",
+        "action": "Create a new client secret at the provider; update APIM; remove the old secret",
+        "severity": "High"
+      },
+      {
+        "kind": "OAuth 2.0 client secret",
+        "name": "OAuth 2.0 server: oauth-test-console",
+        "where": "Developer portal > OAuth 2.0 + OpenID Connect",
+        "stored": "Stored in APIM",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret",
+        "severity": "High"
+      },
+      {
+        "kind": "OpenID Connect client secret",
+        "name": "OpenID Connect provider: entra-oidc",
+        "where": "Developer portal > OAuth 2.0 + OpenID Connect",
+        "stored": "Stored in APIM",
+        "action": "Create a new client secret at the issuer; update APIM; remove the old secret",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: 6b0583a6c140950081070001",
+        "where": "products/starter",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: 6b0583a6c140950081070002",
+        "where": "products/unlimited",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: 6b0588b946346109e8e1fc6c",
+        "where": "products/ai-lab",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: App A",
+        "where": "products/ai-lab",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: Built-in all-access subscription",
+        "where": "apimtk-lab-a-xxxxxx/",
+        "stored": "Stored in APIM",
+        "action": "Regenerate both keys; never use in apps",
+        "severity": "High"
+      },
+      {
+        "kind": "Certificate",
+        "name": "certificate: lab-client-cert",
+        "where": "Certificates",
+        "stored": "Uploaded to APIM",
+        "action": "Reissue at the CA; store in Key Vault",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Client certificate",
+        "name": "mtls: client certificate",
+        "where": "backend:mtls",
+        "stored": "Certificate in APIM",
+        "action": "Reissue the certificate; store it in Key Vault",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Direct management API keys",
+        "where": "tenant/access",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Git access keys",
+        "where": "tenant/gitAccess",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Named value",
+        "name": "gpt-api-key",
+        "where": "api:orders, backend:aoai",
+        "stored": "Key Vault reference",
+        "action": "Rotate the secret at source; add a new version in Key Vault",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Named value",
+        "name": "llm-api-key",
+        "where": "-",
+        "stored": "Key Vault reference",
+        "action": "Rotate the secret at source; add a new version in Key Vault",
+        "severity": "Medium"
+      }
+    ],
+    "since": "2026-08-27",
+    "namedValues": [
+      {
+        "name": "backend-url",
+        "displayName": "backend-url",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 35,
+        "type": "Plain value",
+        "risk": "OK (config)",
+        "usedBy": ""
+      },
+      {
+        "name": "embedding-api-key",
+        "displayName": "embedding-api-key",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 32,
+        "type": "Plain value (looks like a key)",
+        "risk": "Rotate NOW + move to Key Vault",
+        "usedBy": ""
+      },
+      {
+        "name": "gpt-api-key",
+        "displayName": "gpt-api-key",
+        "secret": true,
+        "keyVaultSecretId": "https://kv-apimtk-xxxxxxfb.vault.azure.net/secrets/gpt-api-key",
+        "length": null,
+        "type": "KeyVault",
+        "risk": "Rotate in Key Vault",
+        "usedBy": "api:orders, backend:aoai"
+      },
+      {
+        "name": "llm-api-key",
+        "displayName": "llm-api-key",
+        "secret": true,
+        "keyVaultSecretId": "https://kv-apimtk-xxxxxxfb.vault.azure.net/secrets/llm-api-key",
+        "length": null,
+        "type": "KeyVault",
+        "risk": "Rotate in Key Vault",
+        "usedBy": ""
+      },
+      {
+        "name": "tenant-id",
+        "displayName": "tenant-id",
+        "secret": false,
+        "keyVaultSecretId": "",
+        "length": 36,
+        "type": "Plain value",
+        "risk": "OK (config)",
+        "usedBy": ""
+      }
+    ],
+    "backends": [
+      {
+        "name": "aoai",
+        "url": "https://aoai.contoso.example/openai",
+        "usesCredentials": true
+      },
+      {
+        "name": "func",
+        "url": "https://func-contoso.example/api/run",
+        "usesCredentials": true
+      },
+      {
+        "name": "legacy",
+        "url": "https://legacy.contoso.example",
+        "usesCredentials": true
+      },
+      {
+        "name": "mtls",
+        "url": "https://mtls.contoso.example",
+        "usesCredentials": true
+      }
+    ],
+    "apis": [
+      {
+        "name": "echo-api",
+        "path": "echo",
+        "serviceUrl": "https://echo.playground.azure-api.net/api",
+        "subscriptionRequired": true
+      },
+      {
+        "name": "export",
+        "path": "export",
+        "serviceUrl": "https://stcontoso.blob.core.windows.net/exports?sv=***&sp=***&sig=***",
+        "subscriptionRequired": true
+      },
+      {
+        "name": "orders",
+        "path": "orders",
+        "serviceUrl": "https://backend.contoso.example/api",
+        "subscriptionRequired": true
+      }
+    ],
+    "policiesScanned": 9,
+    "loggers": [],
+    "subscriptions": [
+      {
+        "name": "6b0583a6c140950081070001",
+        "displayName": "",
+        "scope": [
+          "products",
+          "starter"
+        ],
+        "state": "active",
+        "owner": "1",
+        "created": "2026-11-24T12:31:34.05Z"
+      },
+      {
+        "name": "6b0583a6c140950081070002",
+        "displayName": "",
+        "scope": [
+          "products",
+          "unlimited"
+        ],
+        "state": "active",
+        "owner": "1",
+        "created": "2026-11-24T12:31:34.217Z"
+      },
+      {
+        "name": "master",
+        "displayName": "Built-in all-access subscription",
+        "scope": [
+          "apimtk-lab-a-xxxxxx",
+          ""
+        ],
+        "state": "active",
+        "owner": "",
+        "created": "2026-11-24T12:47:52.36Z"
+      },
+      {
+        "name": "6b0588b946346109e8e1fc6c",
+        "displayName": "",
+        "scope": [
+          "products",
+          "ai-lab"
+        ],
+        "state": "active",
+        "owner": "1",
+        "created": "2026-11-24T12:53:13.037Z"
+      },
+      {
+        "name": "app-a",
+        "displayName": "App A",
+        "scope": [
+          "products",
+          "ai-lab"
+        ],
+        "state": "active",
+        "owner": "",
+        "created": "2026-11-24T12:53:16.63Z"
+      }
+    ],
+    "subscriptionCount": 5,
+    "products": [
+      {
+        "name": "ai-lab",
+        "subscriptionRequired": true,
+        "approvalRequired": false,
+        "state": "published"
+      },
+      {
+        "name": "starter",
+        "subscriptionRequired": true,
+        "approvalRequired": false,
+        "state": "published"
+      },
+      {
+        "name": "unlimited",
+        "subscriptionRequired": true,
+        "approvalRequired": true,
+        "state": "published"
+      }
+    ],
+    "tenant_access_enabled": false,
+    "tenant_gitAccess_enabled": false,
+    "identityProviders": [
+      "aad"
+    ],
+    "oauth2Servers": [
+      "oauth-test-console"
+    ],
+    "openidConnectProviders": [
+      "entra-oidc"
+    ],
+    "credentialManager": [
+      {
+        "name": "github",
+        "provider": "github"
+      }
+    ],
+    "certificates": [
+      {
+        "name": "lab-client-cert",
+        "subject": "CN=apimtk-lab-client",
+        "expires": "2026-12-24T12:56:36Z",
+        "keyVault": false
+      }
+    ],
+    "users": [
+      {
+        "name": "1",
+        "email": "admin@contoso.example",
+        "state": "active",
+        "registered": "2026-11-24T12:31:32.963Z",
+        "identities": [
+          "Azure"
+        ]
+      },
+      {
+        "name": "lab-new-user",
+        "email": "lab-new-user@example.com",
+        "state": "active",
+        "registered": "2026-11-24T12:53:12.467Z",
+        "identities": [
+          "Basic"
+        ]
+      }
+    ],
+    "recentChanges": [
+      {
+        "caller": "",
+        "operation": "Microsoft.Resourcehealth/healthevent/InProgress/action",
+        "count": 2,
+        "first": "2026-11-24T13:32:49.152Z",
+        "last": "2026-11-24T17:49:52.218Z"
+      },
+      {
+        "caller": "",
+        "operation": "Microsoft.Resourcehealth/healthevent/Activated/action",
+        "count": 2,
+        "first": "2026-11-24T13:32:49.152Z",
+        "last": "2026-11-24T17:49:52.218Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/namedValues/write",
+        "count": 32,
+        "first": "2026-11-24T12:53:07.8392849Z",
+        "last": "2026-11-24T14:58:25.0360833Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/SUBSCRIPTIONS/REGENERATEPRIMARYKEY/ACTION",
+        "count": 5,
+        "first": "2026-11-24T14:58:18.4500113Z",
+        "last": "2026-11-24T14:58:19.8719086Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/subscriptions/regeneratePrimaryKey/action",
+        "count": 5,
+        "first": "2026-11-24T14:58:18.4477166Z",
+        "last": "2026-11-24T14:58:19.870861Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/NAMEDVALUES/WRITE",
+        "count": 16,
+        "first": "2026-11-24T12:53:07.8118408Z",
+        "last": "2026-11-24T14:58:08.679811Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/portalsettings/write",
+        "count": 4,
+        "first": "2026-11-24T12:53:09.6401308Z",
+        "last": "2026-11-24T14:58:07.1334075Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/PORTALSETTINGS/WRITE",
+        "count": 4,
+        "first": "2026-11-24T12:53:09.5796464Z",
+        "last": "2026-11-24T14:58:07.1255178Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/git/action",
+        "count": 2,
+        "first": "2026-11-24T14:58:06.0894554Z",
+        "last": "2026-11-24T14:58:06.43404Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/GIT/ACTION",
+        "count": 2,
+        "first": "2026-11-24T14:58:06.072647Z",
+        "last": "2026-11-24T14:58:06.4295877Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/regenerateSecondaryKey/action",
+        "count": 2,
+        "first": "2026-11-24T14:57:19.2590237Z",
+        "last": "2026-11-24T14:58:05.7047997Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/REGENERATESECONDARYKEY/ACTION",
+        "count": 2,
+        "first": "2026-11-24T14:57:19.2424802Z",
+        "last": "2026-11-24T14:58:05.7027636Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/regeneratePrimaryKey/action",
+        "count": 3,
+        "first": "2026-11-24T14:57:18.8701455Z",
+        "last": "2026-11-24T14:58:05.3384688Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/REGENERATEPRIMARYKEY/ACTION",
+        "count": 3,
+        "first": "2026-11-24T14:57:18.8619981Z",
+        "last": "2026-11-24T14:58:05.3247624Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/write",
+        "count": 7,
+        "first": "2026-11-24T12:53:09.4684595Z",
+        "last": "2026-11-24T14:58:04.706242Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/WRITE",
+        "count": 7,
+        "first": "2026-11-24T12:53:09.4577023Z",
+        "last": "2026-11-24T14:58:04.6997534Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/USERS/TOKEN/ACTION",
+        "count": 8,
+        "first": "2026-11-24T12:55:27.1774639Z",
+        "last": "2026-11-24T14:58:02.9258789Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/users/token/action",
+        "count": 8,
+        "first": "2026-11-24T12:55:27.2458177Z",
+        "last": "2026-11-24T14:58:02.9079307Z"
+      },
+      {
+        "caller": "",
+        "operation": "CALL MANAGEMENT API",
+        "count": 1,
+        "first": "2026-11-24T14:54:56.6476083Z",
+        "last": "2026-11-24T14:54:56.6476083Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/SCHEDULEDMAINTENANCE/ACTION",
+        "count": 1,
+        "first": "2026-11-24T13:54:45.199672Z",
+        "last": "2026-11-24T13:54:45.199672Z"
+      },
+      {
+        "caller": "",
+        "operation": "Microsoft.Resourcehealth/healthevent/Resolved/action",
+        "count": 1,
+        "first": "2026-11-24T13:54:44.863Z",
+        "last": "2026-11-24T13:54:44.863Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.Authorization/policies/auditIfNotExists/action",
+        "count": 7,
+        "first": "2026-11-24T12:53:48.4940853Z",
+        "last": "2026-11-24T13:07:48.2446214Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/write",
+        "count": 5,
+        "first": "2026-11-24T12:25:38.4814295Z",
+        "last": "2026-11-24T13:06:46.7526609Z"
+      },
+      {
+        "caller": "00000000-0000-0000-0000-0000000000c1",
+        "operation": "Microsoft.ApiManagement/service/apis/diagnostics/write",
+        "count": 3,
+        "first": "2026-11-24T13:03:11.955105Z",
+        "last": "2026-11-24T13:03:16.5654626Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/APIS/DIAGNOSTICS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T13:03:11.9399361Z",
+        "last": "2026-11-24T13:03:16.5528746Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.Authorization/policies/audit/action",
+        "count": 24,
+        "first": "2026-11-24T12:25:30.4501181Z",
+        "last": "2026-11-24T12:57:48.5165428Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/backends/write",
+        "count": 12,
+        "first": "2026-11-24T12:53:11.8347804Z",
+        "last": "2026-11-24T12:57:04.3887434Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/BACKENDS/WRITE",
+        "count": 12,
+        "first": "2026-11-24T12:53:11.8171144Z",
+        "last": "2026-11-24T12:57:04.3621229Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/apis/policies/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:27.4638696Z",
+        "last": "2026-11-24T12:57:04.3561695Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/APIS/POLICIES/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:27.4592447Z",
+        "last": "2026-11-24T12:57:04.3558997Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/policyFragments/write",
+        "count": 6,
+        "first": "2026-11-24T12:53:12.536636Z",
+        "last": "2026-11-24T12:57:04.2197982Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/apis/operations/policies/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:17.2420994Z",
+        "last": "2026-11-24T12:56:49.511476Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/APIS/OPERATIONS/POLICIES/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:17.236039Z",
+        "last": "2026-11-24T12:56:49.5098434Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/apis/operations/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:16.4764826Z",
+        "last": "2026-11-24T12:56:49.0265472Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/APIS/OPERATIONS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:16.4546882Z",
+        "last": "2026-11-24T12:56:48.9942346Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/IDENTITYPROVIDERS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.594533Z",
+        "last": "2026-11-24T12:56:48.5793585Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/PRODUCTS/POLICIES/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:16.2371402Z",
+        "last": "2026-11-24T12:56:48.5761668Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/products/policies/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:16.2567165Z",
+        "last": "2026-11-24T12:56:48.5747436Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/identityProviders/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.6098923Z",
+        "last": "2026-11-24T12:56:48.5661169Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/POLICYFRAGMENTS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:12.4547716Z",
+        "last": "2026-11-24T12:56:48.545701Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/apis/write",
+        "count": 6,
+        "first": "2026-11-24T12:53:10.1806401Z",
+        "last": "2026-11-24T12:56:48.5254266Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/APIS/WRITE",
+        "count": 6,
+        "first": "2026-11-24T12:53:10.1607768Z",
+        "last": "2026-11-24T12:56:48.5153449Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/subscriptions/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:16.7974626Z",
+        "last": "2026-11-24T12:56:48.0577887Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/SUBSCRIPTIONS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:16.792973Z",
+        "last": "2026-11-24T12:56:48.0567018Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/certificates/write",
+        "count": 2,
+        "first": "2026-11-24T12:53:09.5744474Z",
+        "last": "2026-11-24T12:56:48.0287097Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/CERTIFICATES/WRITE",
+        "count": 2,
+        "first": "2026-11-24T12:53:09.5641253Z",
+        "last": "2026-11-24T12:56:48.0172718Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/authorizationProviders/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:08.1245297Z",
+        "last": "2026-11-24T12:56:47.9592025Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/authorizationServers/write",
+        "count": 4,
+        "first": "2026-11-24T12:53:12.5721218Z",
+        "last": "2026-11-24T12:56:47.9480111Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/AUTHORIZATIONSERVERS/WRITE",
+        "count": 4,
+        "first": "2026-11-24T12:53:12.5776376Z",
+        "last": "2026-11-24T12:56:47.9384964Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/policies/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.1049146Z",
+        "last": "2026-11-24T12:56:47.9367986Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/POLICIES/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.0837472Z",
+        "last": "2026-11-24T12:56:47.9195217Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/users/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.1004231Z",
+        "last": "2026-11-24T12:56:47.6711805Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/USERS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.0758635Z",
+        "last": "2026-11-24T12:56:47.6695182Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/products/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.7964486Z",
+        "last": "2026-11-24T12:56:47.6256551Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/PRODUCTS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:13.761545Z",
+        "last": "2026-11-24T12:56:47.6201839Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/openidConnectProviders/write",
+        "count": 3,
+        "first": "2026-11-24T12:53:11.2752256Z",
+        "last": "2026-11-24T12:56:47.3859067Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/OPENIDCONNECTPROVIDERS/WRITE",
+        "count": 3,
+        "first": "2026-11-24T12:53:11.267181Z",
+        "last": "2026-11-24T12:56:47.3726912Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/LOGGERS/WRITE",
+        "count": 4,
+        "first": "2026-11-24T12:53:19.4986448Z",
+        "last": "2026-11-24T12:54:55.9722503Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/loggers/write",
+        "count": 4,
+        "first": "2026-11-24T12:53:19.4994756Z",
+        "last": "2026-11-24T12:54:55.9692506Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/WRITE",
+        "count": 1,
+        "first": "2026-11-24T12:52:47.0149246Z",
+        "last": "2026-11-24T12:52:47.0149246Z"
+      }
+    ],
+    "portalSignupEnabled": false,
+    "runtimeVersion": "0.53.32050.0",
+    "runtimeStatus": "patched",
+    "summary": {
+      "Critical": 8,
+      "High": 6,
+      "Medium": 13,
+      "Low": 2,
+      "Info": 2
+    },
+    "credentialCount": 23,
+    "secretsInApim": 1
+  },
+  {
+    "instance": {
+      "id": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-apimtk-lab/providers/Microsoft.ApiManagement/service/apimtk-lab-b-xxxxxx",
+      "name": "apimtk-lab-b-xxxxxx",
+      "resourceGroup": "rg-apimtk-lab",
+      "subscriptionId": "00000000-0000-0000-0000-000000000000",
+      "location": "uaenorth",
+      "sku": "Developer",
+      "capacity": 1,
+      "vnetType": "None",
+      "publicNetworkAccess": "Enabled",
+      "gatewayUrl": "https://apimtk-lab-b-xxxxxx.azure-api.net",
+      "developerPortalUrl": "https://apimtk-lab-b-xxxxxx.developer.azure-api.net",
+      "identityType": "SystemAssigned",
+      "subscriptionName": "sub-platform-shared",
+      "classic": true,
+      "affectedTier": true,
+      "inAdvisory": "No",
+      "advisoryNote": "",
+      "priority": "P3"
+    },
+    "errors": {},
+    "findings": [
+      {
+        "severity": "High",
+        "area": "Named value",
+        "item": "gpt-4o-api-key-LLM",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
+      },
+      {
+        "severity": "High",
+        "area": "Named value",
+        "item": "llm-api-key-dev",
+        "detail": "Secret stored inside APIM (not Key Vault)",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "Built-in all-access subscription",
+        "detail": "Key grants access to every API",
+        "action": "Regenerate both keys; never use in apps"
+      },
+      {
+        "severity": "High",
+        "area": "Subscription keys",
+        "item": "3 active subscriptions",
+        "detail": "Subscription keys are listed in the advisory",
+        "action": "Map apps to subscriptions; secondary -> regenerate primary -> primary -> regenerate secondary"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: 6b0583a7c140950088070001",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: 6b0583a8c140950088070002",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "subscription: Built-in all-access subscription",
+        "detail": "Created 2026-11-24 - confirm you created it",
+        "action": "Suspend or delete if unknown"
+      },
+      {
+        "severity": "Medium",
+        "area": "Management plane",
+        "item": "tenant/access",
+        "detail": "Disabled - regenerate its keys anyway (tokens are listed in the advisory)",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Medium",
+        "area": "Management plane",
+        "item": "tenant/gitAccess",
+        "detail": "Disabled - regenerate its keys anyway (tokens are listed in the advisory)",
+        "action": "remediate: regen-tenant-keys"
+      },
+      {
+        "severity": "Medium",
+        "area": "Review changes",
+        "item": "user: admin@contoso.example",
+        "detail": "Registered 2026-11-24 - confirm you know this user",
+        "action": "Block or delete if unknown"
+      },
+      {
+        "severity": "Low",
+        "area": "Products",
+        "item": "starter",
+        "detail": "Default sample product present",
+        "action": "Delete if unused (remediate: delete-default-products)"
+      },
+      {
+        "severity": "Low",
+        "area": "Products",
+        "item": "unlimited",
+        "detail": "Default sample product present",
+        "action": "Delete if unused (remediate: delete-default-products)"
+      },
+      {
+        "severity": "Info",
+        "area": "Review changes",
+        "item": "Management operations in Activity log",
+        "detail": "61 operations by 3 callers since 2026-08-27",
+        "action": "Review the Recent changes tab for anything you didn't do"
+      },
+      {
+        "severity": "Info",
+        "area": "Tier",
+        "item": "Developer",
+        "detail": "Classic tier named in the advisory",
+        "action": "Plan migration to a v2 tier where available"
+      }
+    ],
+    "credentials": [
+      {
+        "kind": "Named value",
+        "name": "gpt-4o-api-key-LLM",
+        "where": "-",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "Named value",
+        "name": "llm-api-key-dev",
+        "where": "-",
+        "stored": "Secret in APIM",
+        "action": "Rotate at source; store in Key Vault; link named value to Key Vault",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: 6b0583a7c140950088070001",
+        "where": "products/starter",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: 6b0583a8c140950088070002",
+        "where": "products/unlimited",
+        "stored": "Stored in APIM",
+        "action": "Move app to secondary key; regenerate primary; move app back; regenerate secondary",
+        "severity": "High"
+      },
+      {
+        "kind": "Subscription key",
+        "name": "subscription: Built-in all-access subscription",
+        "where": "apimtk-lab-b-xxxxxx/",
+        "stored": "Stored in APIM",
+        "action": "Regenerate both keys; never use in apps",
+        "severity": "High"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Direct management API keys",
+        "where": "tenant/access",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "Medium"
+      },
+      {
+        "kind": "Management API keys",
+        "name": "Git access keys",
+        "where": "tenant/gitAccess",
+        "stored": "Stored in APIM",
+        "action": "Disable, then regenerate both keys (remediate: disable-tenant-access, regen-tenant-keys)",
+        "severity": "Medium"
+      }
+    ],
+    "since": "2026-08-27",
+    "namedValues": [
+      {
+        "name": "gpt-4o-api-key-LLM",
+        "displayName": "gpt-4o-api-key-LLM",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": ""
+      },
+      {
+        "name": "llm-api-key-dev",
+        "displayName": "llm-api-key-dev",
+        "secret": true,
+        "keyVaultSecretId": "",
+        "length": null,
+        "type": "Secret (stored in APIM)",
+        "risk": "Rotate + move to Key Vault",
+        "usedBy": ""
+      }
+    ],
+    "backends": [],
+    "apis": [
+      {
+        "name": "echo-api",
+        "path": "echo",
+        "serviceUrl": "https://echo.playground.azure-api.net/api",
+        "subscriptionRequired": true
+      }
+    ],
+    "policiesScanned": 5,
+    "loggers": [],
+    "subscriptions": [
+      {
+        "name": "6b0583a7c140950088070001",
+        "displayName": "",
+        "scope": [
+          "products",
+          "starter"
+        ],
+        "state": "active",
+        "owner": "1",
+        "created": "2026-11-24T12:31:35.97Z"
+      },
+      {
+        "name": "6b0583a8c140950088070002",
+        "displayName": "",
+        "scope": [
+          "products",
+          "unlimited"
+        ],
+        "state": "active",
+        "owner": "1",
+        "created": "2026-11-24T12:31:36.113Z"
+      },
+      {
+        "name": "master",
+        "displayName": "Built-in all-access subscription",
+        "scope": [
+          "apimtk-lab-b-xxxxxx",
+          ""
+        ],
+        "state": "active",
+        "owner": "",
+        "created": "2026-11-24T12:48:00.263Z"
+      }
+    ],
+    "subscriptionCount": 3,
+    "products": [
+      {
+        "name": "starter",
+        "subscriptionRequired": true,
+        "approvalRequired": false,
+        "state": "published"
+      },
+      {
+        "name": "unlimited",
+        "subscriptionRequired": true,
+        "approvalRequired": true,
+        "state": "published"
+      }
+    ],
+    "tenant_access_enabled": false,
+    "tenant_gitAccess_enabled": false,
+    "identityProviders": [],
+    "oauth2Servers": [],
+    "openidConnectProviders": [],
+    "credentialManager": [],
+    "certificates": [],
+    "users": [
+      {
+        "name": "1",
+        "email": "admin@contoso.example",
+        "state": "active",
+        "registered": "2026-11-24T12:31:34.867Z",
+        "identities": [
+          "Azure"
+        ]
+      }
+    ],
+    "recentChanges": [
+      {
+        "caller": "",
+        "operation": "Microsoft.Resourcehealth/healthevent/Activated/action",
+        "count": 2,
+        "first": "2026-11-24T13:32:48.602Z",
+        "last": "2026-11-24T17:49:52.2Z"
+      },
+      {
+        "caller": "",
+        "operation": "Microsoft.Resourcehealth/healthevent/InProgress/action",
+        "count": 2,
+        "first": "2026-11-24T13:32:48.602Z",
+        "last": "2026-11-24T17:49:52.2Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.Authorization/policies/auditIfNotExists/action",
+        "count": 3,
+        "first": "2026-11-24T12:56:09.6553525Z",
+        "last": "2026-11-24T14:59:38.2980144Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/write",
+        "count": 6,
+        "first": "2026-11-24T12:25:35.3928418Z",
+        "last": "2026-11-24T14:58:40.9534766Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/WRITE",
+        "count": 2,
+        "first": "2026-11-24T12:53:04.9053806Z",
+        "last": "2026-11-24T14:58:19.0238071Z"
+      },
+      {
+        "caller": "",
+        "operation": "UPDATED MANAGED SERVICE IDENTITY",
+        "count": 2,
+        "first": "2026-11-24T14:58:16.0132089Z",
+        "last": "2026-11-24T14:58:16.0132089Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.Authorization/policies/audit/action",
+        "count": 10,
+        "first": "2026-11-24T12:25:30.5019087Z",
+        "last": "2026-11-24T14:58:13.1499245Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/GIT/ACTION",
+        "count": 2,
+        "first": "2026-11-24T14:58:12.3046009Z",
+        "last": "2026-11-24T14:58:12.6850504Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/git/action",
+        "count": 2,
+        "first": "2026-11-24T14:58:12.3070438Z",
+        "last": "2026-11-24T14:58:12.681171Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/regenerateSecondaryKey/action",
+        "count": 1,
+        "first": "2026-11-24T14:58:12.1976701Z",
+        "last": "2026-11-24T14:58:12.1976701Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/REGENERATESECONDARYKEY/ACTION",
+        "count": 1,
+        "first": "2026-11-24T14:58:12.1952226Z",
+        "last": "2026-11-24T14:58:12.1952226Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/REGENERATEPRIMARYKEY/ACTION",
+        "count": 1,
+        "first": "2026-11-24T14:58:11.8256645Z",
+        "last": "2026-11-24T14:58:11.8256645Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/regeneratePrimaryKey/action",
+        "count": 1,
+        "first": "2026-11-24T14:58:11.8217758Z",
+        "last": "2026-11-24T14:58:11.8217758Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/tenant/write",
+        "count": 2,
+        "first": "2026-11-24T14:58:09.9632765Z",
+        "last": "2026-11-24T14:58:10.4279486Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/TENANT/WRITE",
+        "count": 2,
+        "first": "2026-11-24T14:58:09.9452484Z",
+        "last": "2026-11-24T14:58:10.414343Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/SCHEDULEDMAINTENANCE/ACTION",
+        "count": 1,
+        "first": "2026-11-24T13:54:28.6226497Z",
+        "last": "2026-11-24T13:54:28.6226497Z"
+      },
+      {
+        "caller": "",
+        "operation": "Microsoft.Resourcehealth/healthevent/Resolved/action",
+        "count": 1,
+        "first": "2026-11-24T13:54:27.992Z",
+        "last": "2026-11-24T13:54:27.992Z"
+      },
+      {
+        "caller": "00000000-0000-0000-0000-0000000000c1",
+        "operation": "Microsoft.ApiManagement/service/apis/diagnostics/write",
+        "count": 1,
+        "first": "2026-11-24T13:03:10.9280506Z",
+        "last": "2026-11-24T13:03:10.9280506Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/APIS/DIAGNOSTICS/WRITE",
+        "count": 1,
+        "first": "2026-11-24T13:03:10.9102253Z",
+        "last": "2026-11-24T13:03:10.9102253Z"
+      },
+      {
+        "caller": "admin@contoso.example",
+        "operation": "Microsoft.ApiManagement/service/namedValues/write",
+        "count": 12,
+        "first": "2026-11-24T12:53:14.0371561Z",
+        "last": "2026-11-24T12:57:04.2329109Z"
+      },
+      {
+        "caller": "",
+        "operation": "MICROSOFT.APIMANAGEMENT/SERVICE/NAMEDVALUES/WRITE",
+        "count": 6,
+        "first": "2026-11-24T12:53:14.0178863Z",
+        "last": "2026-11-24T12:56:47.1606631Z"
+      }
+    ],
+    "portalSignupEnabled": false,
+    "runtimeVersion": "0.53.32050.0",
+    "runtimeStatus": "patched",
+    "summary": {
+      "Critical": 0,
+      "High": 4,
+      "Medium": 6,
+      "Low": 2,
+      "Info": 2
+    },
+    "credentialCount": 7,
+    "secretsInApim": 2
+  }
+]

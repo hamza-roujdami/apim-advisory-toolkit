@@ -24,7 +24,7 @@
         "severity": "Critical",
         "area": "URL",
         "item": "backend:func: ?code",
-        "detail": "Key or signature written into a backend URL",
+        "detail": "Key or signature written into the URL",
         "action": "Rotate at source (Function key, SAS, ...); move it to a Key Vault named value"
       },
       {

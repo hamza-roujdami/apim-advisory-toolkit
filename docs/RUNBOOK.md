@@ -1,6 +1,6 @@
 # Runbook: APIM Classic-tiers advisory (MZK9-GH0)
 
-One pass per organisation. Split the work: the **platform/security team** leads phases 1 and 3, the **application/AI team** owns the backend keys (Foundry, third-party LLM APIs) in phases 2 and 4, and one person owns the Microsoft support case and communications. If a Microsoft account team is helping you, agree these roles with them.
+One pass per organisation. Split the work: the **platform/security team** leads phases 1 and 3, the **application/AI team** owns the backend keys (Foundry, third-party LLM APIs) in phases 2 and 4, and one person owns the Microsoft support case and communications.
 
 ## Phase 0: Triage (day 0)
 - [ ] Portal → Service Health → Security advisories → **MZK9-GH0**. Note the impacted subscriptions.

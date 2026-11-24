@@ -99,6 +99,8 @@ def test_inventory_covers_every_credential_type():
     assert "masked: query code" in names                                 # ARM masks literals as null
     assert "backend:func: ?code" in names                                # key in a backend URL ...
     assert "abcDEF123" not in json.dumps(prod)                           # ... is never stored
+    from apimtk.inventory import safe_url
+    assert safe_url("https://s.example/c?sv=1&sp=r&sig=abc") == ("https://s.example/c?sv=***&sp=***&sig=***", ["sig"])
     nvs = {n["displayName"]: n for n in prod["namedValues"]}
     assert nvs["embedding-api-key"]["type"].startswith("Plain value (looks")
     assert nvs["tenant-id"]["type"] == "Plain value"

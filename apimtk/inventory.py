@@ -162,7 +162,7 @@ def _policy_xml(resp: dict | None) -> str:
 def _url_credential(c: "_Collector", where: str, params: list[str]):
     if params:
         c.both("Critical", "URL", "Credential in URL", f"{where}: ?{', '.join(params)}", where, "Written into the URL",
-               "Key or signature written into a backend URL",
+               "Key or signature written into the URL",
                "Rotate at source (Function key, SAS, ...); move it to a Key Vault named value")
 
 
@@ -226,7 +226,7 @@ def _backends(arm: Arm, sid: str, data: dict, c: _Collector, scan):
                    "Reissue the certificate; store it in Key Vault")
 
 
-URL_SECRET_PARAM = re.compile(r"^(code|sig|key|apikey|api-key|api_key|token|access_token|secret|password|sas|se|sv|sp)$", re.I)
+URL_SECRET_PARAM = re.compile(r"^(code|sig|key|apikey|api-key|api_key|token|access_token|secret|password|sas)$", re.I)
 
 
 def safe_url(url: str | None) -> tuple[str, list[str]]:

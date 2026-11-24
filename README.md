@@ -202,6 +202,8 @@ You don't need either of these to use the tool.
 - **Test lab:** [lab/](lab/README.md) deploys test APIM instances seeded with every scenario above into a sandbox
   subscription, runs the tool, applies the fixes and checks the results. We use it to test the toolkit; it costs a
   few dollars a day while it runs.
+- **Proof it works:** [docs/lab-results/](docs/lab-results/README.md) has the sanitized tracker, report and check
+  results from an end-to-end lab run on real Classic instances.
 
 ## Sources
 
@@ -246,6 +248,6 @@ apimtk/      the CLI (assess, inventory, report, hunt, remediate)
 kql/         hunting queries used by `apimtk hunt`
 harden/      example Azure Policy, Bicep and APIM policy (not deployment-tested)
 lab/         optional test environment (see lab/README.md)
-docs/        runbook, email templates, suggested target architecture
+docs/        runbook and architecture diagrams
 tests/       offline tests against a fake tenant: pip install -e ".[dev]" && pytest
 ```
