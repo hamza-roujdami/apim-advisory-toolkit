@@ -13,6 +13,18 @@ misuse, rotate safely, and harden so it can't happen again.
 
 ![Target architecture](docs/target-architecture.png)
 
+## Reference architecture (target state)
+
+![Secure APIM reference architecture](docs/secure-apim-reference-architecture.png)
+
+| Layer | Key controls |
+|---|---|
+| 1 Consumers | Managed identity, Entra token **and** subscription key, keys in Key Vault, one subscription per app; developer portal Entra-only, no sign-up |
+| 2 Edge | Front Door / Application Gateway + WAF as the only public entry, TLS 1.2+, DDoS |
+| 3 APIM | VNet internal / private endpoint; `validate-azure-ad-token` → subscription quota → rate/token limits; named values = Key Vault refs; managed identity on; **direct management API off**, tenant/Git keys rotated |
+| 4 Backends | Private endpoints; Foundry/AOAI via APIM managed identity with key auth disabled; third-party keys only in Key Vault |
+| 5 Control plane | Entra ID + PIM + Conditional Access for admins, least-privilege RBAC (policy edit = identity), Key Vault audit, Azure Policy, Defender for APIs, Log Analytics / Sentinel |
+
 ## What's in the box
 
 | Phase | Command | What it does | Changes Azure? |
