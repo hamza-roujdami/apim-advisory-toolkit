@@ -5,7 +5,8 @@ Checks:
   - new news articles about Azure API Management security (Google News RSS)
   - new MSRC CVEs whose title mentions API Management
 
-Writes report.md and updates state.json. Exits 0 always; sets changed=true in $GITHUB_OUTPUT when something is new.
+Writes report.md (source or CVE changes: may need a repo update) and news.md (new articles), and updates state.json.
+Exits 0 always; sets changed=true / news=true in $GITHUB_OUTPUT.
 Standard library only.
 """
 
@@ -27,6 +28,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 STATE = HERE / "state.json"
 REPORT = HERE / "report.md"
+NEWS = HERE / "news.md"
 UA = {"User-Agent": "Mozilla/5.0 (apim-advisory-toolkit source watch)"}
 BLOCK = {"p", "div", "li", "h1", "h2", "h3", "h4", "tr", "br", "section", "article", "pre", "table", "ul", "ol"}
 SKIP = {"script", "style", "noscript", "svg", "head", "template"}
@@ -142,17 +144,20 @@ def _now() -> str:
 def main() -> int:
     cfg = json.loads((HERE / "sources.json").read_text())
     state = json.loads(STATE.read_text()) if STATE.exists() else {}
-    findings = check_pages(cfg, state) + check_msrc(cfg, state) + check_news(cfg, state)
+    findings = check_pages(cfg, state) + check_msrc(cfg, state)
+    news = check_news(cfg, state)
     state["last_run"] = _now()
     STATE.write_text(json.dumps(state, indent=1, ensure_ascii=False) + "\n")
     if findings:
         REPORT.write_text(
-            "Something the README relies on changed, or there's new coverage of the advisory. Review it and update "
-            "the README, docs/RUNBOOK.md or the toolkit if needed, then close this issue.\n\n" + "\n".join(findings))
-    print("\n".join(findings) or "No changes.")
+            "A source the README relies on changed, or there's a new CVE. Review it and update the README, "
+            "docs/RUNBOOK.md or the toolkit if needed, then close this issue.\n\n" + "\n".join(findings))
+    if news:
+        NEWS.write_text(f"**{_now()[:10]}**\n\n" + "\n".join(news))
+    print("\n".join(findings + news) or "No changes.")
     if gh := os.environ.get("GITHUB_OUTPUT"):
         with open(gh, "a") as f:
-            f.write(f"changed={'true' if findings else 'false'}\n")
+            f.write(f"changed={'true' if findings else 'false'}\nnews={'true' if news else 'false'}\n")
     return 0
 
 

@@ -1,5 +1,6 @@
 # Daily check of the sources this repo relies on. Opens an issue (assigned to the repo owner, so GitHub notifies
-# them) when a source page changes, a new MSRC CVE mentions API Management, or new articles appear.
+# them) when a source page changes or a new MSRC CVE mentions API Management. New articles are added as a comment
+# on one open "news" issue, so daily coverage doesn't open a new issue each day.
 # State lives in the Actions cache, not in the repo, so third-party page text is never committed.
 name: watch-sources
 on:
@@ -34,3 +35,15 @@ jobs:
           gh label create source-watch --color FBCA04 --description "Daily source watch" 2>/dev/null || true
           gh issue create --title "Source watch $(date -u +%F): review needed" --label source-watch \
             --assignee "${{ github.repository_owner }}" --body-file .github/watch/report.md
+      - if: steps.watch.outputs.news == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create source-watch-news --color C5DEF5 --description "New coverage of the advisory" 2>/dev/null || true
+          issue="$(gh issue list --label source-watch-news --state open --json number -q '.[0].number')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body-file .github/watch/news.md
+          else
+            gh issue create --title "Source watch: news coverage" --label source-watch-news \
+              --assignee "${{ github.repository_owner }}" --body-file .github/watch/news.md
+          fi

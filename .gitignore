@@ -6,3 +6,4 @@ __pycache__/
 .venv/
 .github/watch/state.json
 .github/watch/report.md
+.github/watch/news.md
