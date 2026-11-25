@@ -151,7 +151,9 @@ def main() -> int:
     if findings:
         REPORT.write_text(
             "A source the README relies on changed, or there's a new CVE. Review it and update the README, "
-            "docs/RUNBOOK.md or the toolkit if needed, then close this issue.\n\n" + "\n".join(findings))
+            "docs/RUNBOOK.md or the toolkit if needed, then close this issue.\n\n"
+            "**Next step:** assign this issue to **Copilot** to get a draft pull request that follows "
+            "`.github/copilot-instructions.md`, then review it before merging.\n\n" + "\n".join(findings))
     if news:
         NEWS.write_text(f"**{_now()[:10]}**\n\n" + "\n".join(news))
     print("\n".join(findings + news) or "No changes.")
