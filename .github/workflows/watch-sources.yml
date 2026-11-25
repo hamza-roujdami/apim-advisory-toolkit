@@ -1,0 +1,36 @@
+# Daily check of the sources this repo relies on. Opens an issue (assigned to the repo owner, so GitHub notifies
+# them) when a source page changes, a new MSRC CVE mentions API Management, or new articles appear.
+# State lives in the Actions cache, not in the repo, so third-party page text is never committed.
+name: watch-sources
+on:
+  schedule:
+    - cron: "0 5 * * *"   # daily, 05:00 UTC
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+concurrency: watch-sources
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: .github/watch/state.json
+          key: watch-state-${{ github.run_id }}
+          restore-keys: watch-state-
+      - id: watch
+        run: python3 .github/watch/watch.py
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .github/watch/state.json
+          key: watch-state-${{ github.run_id }}
+      - if: steps.watch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create source-watch --color FBCA04 --description "Daily source watch" 2>/dev/null || true
+          gh issue create --title "Source watch $(date -u +%F): review needed" --label source-watch \
+            --assignee "${{ github.repository_owner }}" --body-file .github/watch/report.md

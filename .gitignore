@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .venv/
+.github/watch/state.json
+.github/watch/report.md

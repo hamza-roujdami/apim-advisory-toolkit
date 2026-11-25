@@ -251,3 +251,6 @@ lab/         optional test environment (see lab/README.md)
 docs/        runbook and architecture diagrams
 tests/       offline tests against a fake tenant: pip install -e ".[dev]" && pytest
 ```
+
+A daily workflow (`.github/workflows/watch-sources.yml`) opens an issue when a source page changes, a new MSRC CVE
+mentions API Management, or new articles appear, so the README stays current.

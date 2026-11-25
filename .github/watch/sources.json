@@ -1,0 +1,36 @@
+{
+  "pages": [
+    {
+      "name": "Microsoft Tech Community: Rotating credentials in Azure API Management",
+      "url": "https://techcommunity.microsoft.com/blog/integrationsonazureblog/rotating-credentials-in-azure-api-management/4575478",
+      "start": "Rotating credentials in Azure API Management",
+      "end": "Follow this blog board"
+    },
+    {
+      "name": "NSM advisory (Norwegian National Security Authority)",
+      "url": "https://nsm.no/aktuelt/nsm-deler-tiltak-mot-sarbarhet-i-azure-api-management",
+      "start": "Publisert:",
+      "end": "Finner du det du leter etter?"
+    },
+    {
+      "name": "Microsoft Learn: Secure your Azure API Management deployment",
+      "url": "https://learn.microsoft.com/en-us/azure/api-management/secure-api-management",
+      "start": "Secure your Azure API Management deployment",
+      "end": "Was this page helpful?"
+    },
+    {
+      "name": "Microsoft Learn: Direct management API retirement",
+      "url": "https://learn.microsoft.com/en-us/azure/api-management/breaking-changes/direct-management-api-retirement-march-2025",
+      "start": "Direct management API",
+      "end": "Was this page helpful?"
+    },
+    {
+      "name": "Microsoft Learn: Impacted resources from security advisories",
+      "url": "https://learn.microsoft.com/en-us/azure/service-health/impacted-resources-security",
+      "start": "Impacted resources from Azure security advisories",
+      "end": "Was this page helpful?"
+    }
+  ],
+  "news_query": "\"API Management\" Azure (vulnerability OR advisory OR exploited OR MZK9-GH0)",
+  "msrc_title_filter": "API Management"
+}
