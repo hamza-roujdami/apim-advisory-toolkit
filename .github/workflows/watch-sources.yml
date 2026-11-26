@@ -5,7 +5,7 @@
 name: watch-sources
 on:
   schedule:
-    - cron: "0 5 * * *"   # daily, 05:00 UTC
+    - cron: "23 5 * * *"  # daily, 05:23 UTC (off the hour: GitHub delays or drops busy top-of-hour schedules)
   workflow_dispatch:
 permissions:
   contents: read
